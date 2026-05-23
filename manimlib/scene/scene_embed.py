@@ -138,10 +138,10 @@ class InteractiveSceneEmbed:
 
     def reload_scene(self, embed_line: int | None = None) -> None:
         """
-        Reloads the scene just like the `manimgl` command would do with the
+        Reloads the scene just like the `manim` command would do with the
         same arguments that were provided for the initial startup. This allows
         for quick iteration during scene development since we don't have to exit
-        the IPython kernel and re-run the `manimgl` command again. The GUI stays
+        the IPython kernel and re-run the `manim` command again. The GUI stays
         open during the reload.
 
         If `embed_line` is provided, the scene will be reloaded at that line

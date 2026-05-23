@@ -10,4 +10,4 @@ logging.basicConfig(
     level=logging.WARNING, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
 )
 
-log = logging.getLogger("manimgl")
+log = logging.getLogger("manim")

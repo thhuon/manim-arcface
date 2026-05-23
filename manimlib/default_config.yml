@@ -2,8 +2,7 @@
 # run, including names for directories it will write to, default
 # parameters for various classes, style choices, etc. To customize
 # your own, create a custom_config.yml file in whatever directory
-# you are running manim. For 3blue1brown, for instance, mind is
-# here: https://github.com/3b1b/videos/blob/master/custom_config.yml
+# you are running manim.
 
 # Alternatively, you can create it wherever you like, and on running
 # manim, pass in `--config_file /path/to/custom/config/file.yml`

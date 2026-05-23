@@ -7,6 +7,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# ManimCE
+latex_cache/
+vector_images/
+raster_images/
+three_d_models/
+sounds/
+data/
+downloads/
+
 # C extensions
 *.so
 

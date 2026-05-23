@@ -207,7 +207,7 @@ def parse_cli():
         parser.add_argument(
             "-v", "--version",
             action="store_true",
-            help="Display the version of manimgl"
+            help="Display the version of manim"
         )
         parser.add_argument(
             "--log-level",

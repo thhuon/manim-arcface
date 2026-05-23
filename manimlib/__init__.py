@@ -4,7 +4,7 @@ except ImportError:  # For Python <3.8 fallback
     from importlib_metadata import version, PackageNotFoundError  # type: ignore
 
 try:
-    __version__ = version("manimgl")
+    __version__ = "1.0.0"
 except PackageNotFoundError:
     __version__ = "unknown"
 
