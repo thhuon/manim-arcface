@@ -81,6 +81,18 @@ empty_ctex:
   compiler: xelatex
   preamble: ""
 
+# Custom template without physics.sty (for systems without it)
+basic_no_physics:
+  description: "Basic template without physics package"
+  compiler: latex
+  preamble: |-
+    \usepackage[english]{babel}
+    \usepackage[utf8]{inputenc}
+    \usepackage[T1]{fontenc}
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{xcolor}
+
 # A collection of TeX templates for the fonts described at
 # http://jf.burnol.free.fr/showcase.html
 
