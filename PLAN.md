@@ -14,102 +14,15 @@
 | **Purpose** | Explain ArcFace's additive angular margin loss visually |
 | **Audience** | Undergrad CS students with basic ML knowledge |
 
----
-
-## 2. Visual & Rendering Specification
-
-### Scene Setup
-- **Background:** Deep navy `#0b1020` (nearly black-blue)
-- **Camera:** 3D-enabled for hypersphere scenes; smooth interpolations
-- **Coordinate system:** `NumberPlane` for 2D; `ThreeDAxes` for 3D sphere
-- **Lighting:** Ambient soft glow from embedding points
-
-### 3B1B Color Palette (from ManimGL)
-
-#### Primary Palette (3B1B Signature Colors)
-| Role | Color Name | Hex Code |
-|------|------------|----------|
-| Primary Blue | BLUE_C | `#58C4DD` |
-| Primary Green | GREEN_C | `#83C167` |
-| Primary Yellow | YELLOW_C | `#FFFF00` |
-| Primary Red | RED_C | `#FC6255` |
-
-#### Extended Palette
-| Role | Color | Hex Code |
-|------|-------|----------|
-| Blue Dark | BLUE_D | `#29ABCA` |
-| Blue Light | BLUE_B | `#9CDCEB` |
-| Teal | TEAL_C | `#5CD0B3` |
-| Purple | PURPLE_C | `#9A72AC` |
-| Orange | ORANGE | `#FF862F` |
-| White | WHITE | `#FFFFFF` |
-| Black | BLACK | `#000000` |
-| Grey | GREY_C | `#888888` |
-
-#### Project-Specific Colors
-| Role | Color |
-|------|-------|
-| Background | `#0b1020` |
-| Primary accent | `#4fc3f7` (sky blue) |
-| Identity A | `#ff6b9d` (coral pink) |
-| Identity B | `#4ecdc4` (teal) |
-| Identity C | `#ffe66d` (warm yellow) |
-| Identity D | `#c3a6ff` (lavender) |
-| Identity E | `#69f0ae` (mint) |
-| Decision boundary | `#ffffff` @ 15% opacity |
-| Text / labels | `#e8eaf6` |
-| Muted text | `#7986cb` |
-
-### Typography
-- Font: "Latin Modern Roman" via `Tex` / `MathTex`
-- Font: "Consolas" for code/text via `Text`
-- Minimal labels — prefer geometric intuition over text
-- Font size: 72pt for equations, 24-30pt for descriptions
-- Font size for Tex: 144pt = 1 manim unit height
-
-### 3B1B Visual Style Guidelines
-
-#### Animation Patterns
-1. **Smooth Transforms**: Use `FadeTransform` and `ReplacementTransform` for transitions
-2. **Grid Reveals**: `ShowCreation` for coordinate planes and grids
-3. **Matrix Animations**: `apply_matrix()` with `run_time=3` for smooth linear transforms
-4. **Color Gradients**: `set_submobject_colors_by_gradient()` for color transitions
-5. **Text Animations**: `Write()` for text appearance, `FadeIn/Out` for smooth transitions
-
-#### 3B1B Code Patterns from example_scenes.py
-```python
-# Grid with stroke
-grid = NumberPlane((-10, 10), (-5, 5))
-grid.set_stroke(BLUE_E, 1)
-grid.add_coordinate_labels(font_size=24)
-
-# Text with backstroke
-text.set_backstroke(width=5)
-
-# Arrange and position
-group.arrange(RIGHT)
-group.to_edge(UP)
-
-# Animate transforms
-self.play(grid.animate.apply_matrix(matrix), run_time=3)
-
-# Color gradient on groups
-grid.set_submobject_colors_by_gradient(BLUE, GREEN)
-```
-
-#### Visual Principles
-1. **Minimal Text**: Explain through geometry, not words
-2. **Clean Backgrounds**: Dark backgrounds make colors pop
-3. **Slow Reveals**: Let viewers absorb each concept
-4. **Smooth Camera**: Use `run_time=3-6` for major movements
-5. **Backstroke**: Add subtle outlines to text for readability on complex backgrounds
+> **Note:** See `.cursor/skills/skill.md` for detailed coding rules, color palette, animation patterns, and technical guidelines.
 
 ---
 
-## 3. Scene Breakdown
+## 2. Scene Breakdown
 
 | # | Scene | Duration | Key Visual |
 |---|-------|----------|------------|
+| 0 | Introduction | ~30s | Title + wireframe face transformation |
 | 1 | Hook | ~30s | Phone unlock → pixel dissolve |
 | 2 | Pipeline | ~45s | 4-stage left-to-right flow |
 | 3 | Challenges | ~1m | Variability + Why Accuracy + Transition |
@@ -124,90 +37,19 @@ grid.set_submobject_colors_by_gradient(BLUE, GREEN)
 
 ---
 
-## 4. Animation Techniques
-
-### Preferred Methods
-```python
-# Dynamic values
-ValueTracker() + always_redraw()
-self.play(x_tracker.animate.set_value(new_val))
-
-# Smooth morphs
-FadeTransform(source, target)
-ReplacementTransform(source, target)
-TransformMatchingShapes(source, target, path_arc=PI/2)
-
-# Clustered animations
-AnimationGroup(), LaggedStart(), LaggedStartMap()
-
-# Geometric reveals
-GrowArrow(), MoveAlongPath(), ShowCreation()
-self.play(grid.animate.apply_matrix(matrix), run_time=3)
-
-# Text animations
-Write(text), FadeIn(text, UP), FadeOut(text, shift=DOWN)
-```
-
-### Transitions
-- 1-second fade to black: `self.wait(0.5)` + `FadeOut/FadeIn`
-- Camera reset before each scene: `self.frame.animate.move_to(origin)`
-
----
-
-## 5. File Structure
-
-```
-manim-arcface-2/
-├── requirements.txt
-├── example_scenes.py          # Reference examples
-├── main.py                    # Scene order, config, render
-├── videos/                    # Output directory
-├── manimlib/                  # ManimGL core library
-└── scenes/
-    ├── __init__.py
-    ├── scene01_hook.py
-    ├── scene02_pipeline.py
-    ├── scene03_embedding_space.py
-    ├── scene04_softmax_limitation.py
-    ├── scene05_evolution.py
-    ├── scene06_arcface_core.py
-    ├── scene07_why_it_works.py
-    ├── scene08_applications.py
-    └── scene09_closing.py
-```
-
----
-
-## 6. Technical Notes
-
-| Item | Value |
-|------|-------|
-| Output | `.mp4` via ffmpeg |
-| Resolution | 1920×1080 (1080p) |
-| FPS | 60fps |
-| Camera | `ThreeDScene` for Scene 7–8 (Evolution, ArcFace Core) |
-| Commands | `manimgl file.py SceneName -w` (render) `-s` (preview) |
-
-### Render Commands
-```bash
-LD_LIBRARY_PATH=/home/aster/.local/lib:$LD_LIBRARY_PATH manimgl main.py SceneName -w
-```
-
----
-
-## 7. Scene-by-Scene Flow
+## 3. Scene-by-Scene Flow
 
 | # | Scene | Narration | Display | Camera Movement | Transitions |
 |---|-------|-----------|---------|----------------|-------------|
-| 0 | Introduction | "Bạn có bao giờ thắc mắc làm sao điện thoại hay máy tính có thể nhận ra và cho phép bạn mở khóa bằng khuôn mặt? Làm thế nào mà thiết bị của bạn biết đó là chính chủ, chứ không phải ai khác? Trong video này, chúng ta sẽ cùng khám phá thuật toán nhận dạng khuôn mặt hiện đại, đặc biệt là ArcFace, thông qua những hình ảnh trực quan và dễ hiểu nhất. Hãy cùng bắt đầu từ điều cơ bản nhất: máy tính nhìn khuôn mặt của chúng ta như thế nào?" | Màn hình đen → logo fade-in, sau đó khuôn mặt người 3D hiện ra, từ từ phân rã thành pixels, wireframe, và các vector points để minh họa cách máy tính biểu diễn khuôn mặt. | Camera bắt đầu ở vị trí xa (zoom out toàn cảnh), từ từ zoom in vào khuôn mặt 3D. Sau đó camera nhẹ nhàng di chuyển xung quanh để show depth của khuôn mặt wireframe. | → Scene 1 |
+| 0 | Introduction | "Bạn có bao giờ thắc mắc làm sao điện thoại hay máy tính có thể nhận ra và cho phép bạn mở khóa bằng khuôn mặt? Làm thế nào mà thiết bị của bạn biết đó là chính chủ, chứ không phải ai khác? Trong video này, chúng ta sẽ cùng khám phá thuật toán nhận dạng khuôn mặt hiện đại, đặc biệt là ArcFace, thông qua những hình ảnh trực quan và dễ hiểu nhất. Hãy cùng bắt đầu từ điều cơ bản nhất: máy tính nhìn khuôn mặt của chúng ta như thế nào?" | Black screen rồi hiện ra sơ đồ vector phẳng minh họa màn hình laptop và điện thoại đang khóa (với icon khóa). Một khung nhận diện khuôn mặt (bounding box) xuất hiện bao quanh một khuôn mặt nét vẽ vector tối giản. [3D]: Khuôn mặt chuyển mượt mà thành một mô hình lưới 3D (wireframe) xoay nhẹ, các đỉnh của lưới phát sáng thành các điểm vector (vector points), sau đó các điểm này phóng ra các luồng số/pixel ma trận đổ về một điểm biểu diễn toán học đơn lẻ. Hiện dòng chữ tiêu đề lớn: "Understanding ArcFace: The Geometry Behind Modern Face Recognition".| Camera ở vị trí xa (zoom out toàn cảnh), từ từ tiến vào (zoom in) tiêu điểm là mô hình lưới 3D của khuôn mặt. Camera xoay quanh trục Y một góc 30 độ để tạo cảm giác chiều sâu của cấu trúc 3D, sau đó pan mượt xuống phía dòng chữ tiêu đề.  | → Scene 1 |
 | 1 | Hook | "Mỗi ngày, hàng tỷ thiết bị trên thế giới sử dụng nhận diện khuôn mặt để mở khóa điện thoại, xác thực thanh toán, hay tìm kiếm khuôn mặt trong ảnh. Ít ai biết rằng, phần lớn các hệ thống này đều dựa trên một thuật toán có tên ArcFace. Được phát triển từ năm 2019, ArcFace nhanh chóng trở thành tiêu chuẩn vàng trong ngành nhận diện khuôn mặt, được Apple, Google, và hầu hết các công ty công nghệ lớn áp dụng. Nhưng đằng sau một thao tác đơn giản như nhìn vào camera để mở khóa điện thoại là cả một hệ thống phức tạp gồm nhiều bước xử lý. Vậy chính xác thì điều gì đang xảy ra khi bạn nhìn vào camera?" | Animation mở khóa điện thoại bằng khuôn mặt, pixel dissolve effect khi khuôn mặt được xử lý, các điểm đặc trưng được highlight. Background hiện chữ "ArcFace" với hiệu ứng glow nhẹ để nhấn mạnh tên thuật toán. | Camera di chuyển từ phone icon ở giữa, zoom out nhẹ nhàng để show toàn bộ animation, rồi zoom in vào khuôn mặt đang dissolve thành pixels. Chữ "ArcFace" xuất hiện ở góc dưới với animation fade-in. | Scene 0 → Scene 2 |
 | 2 | Pipeline | **Phần A - Human vs Computer:** "Với con người, nhận ra một khuôn mặt là điều gần như tức thì. Chỉ cần một ánh nhìn, chúng ta có thể nhận ra bạn bè, người thân, hay thậm chí một người nổi tiếng giữa đám đông. Nhưng với máy tính… khuôn mặt không phải là con người. Nó chỉ là tập hợp của các pixel và những con số. Để làm được điều đó, máy tính cần biến khuôn mặt thành một dạng biểu diễn toán học."<br><br>**Phần B - 4-Step Pipeline:** "Một hệ thống nhận diện khuôn mặt hiện đại hoạt động qua bốn giai đoạn chính. Đầu tiên, camera chụp lại hình ảnh khuôn mặt của bạn. Tiếp theo, thuật toán phát hiện khuôn mặt sẽ tìm và xác định vị trí khuôn mặt trong ảnh. Sau đó, mạng nơ-ron sẽ trích xuất các đặc trưng quan trọng từ khuôn mặt đó. Và cuối cùng, hệ thống so sánh các đặc trưng này với dữ liệu đã lưu để xác nhận danh tính. Tất cả những bước này diễn ra trong chưa đầy một giây." | **Phần A:** Màn hình chia đôi - bên trái: khuôn mặt → não người với hiệu ứng "aha moment" (trực giác), chú thích "Nhận ra ngay lập tức". Bên phải: khuôn mặt → lưới pixel → các con số/matrix, chú thích "Cần biến đổi thành biểu diễn toán học".<br><br>**Phần B:** Sơ đồ luồng 4 giai đoạn: Image → Face Detection → Feature Extraction → Verification, với animation mũi tên flow từ trái sang phải, mỗi bước được highlight khi được giải thích. | **Phần A:** Camera center, bắt đầu với hình khuôn mặt thực. Split screen effect: trái cho human view, phải cho computer view. Pan nhẹ qua lại giữa hai bên. Merge về center trước khi chuyển sang phần B.<br><br>**Phần B:** Camera zoom out nhẹ để reveal sơ đồ pipeline. Pan từ trái sang phải theo luồng xử lý, dừng lại ở mỗi stage khi được giải thích. Reset về giữa trước khi chuyển scene. | Scene 1 → Scene 3 |
 | 3 | Challenges | **Phần A - Variability:** "Đến đây bắt đầu xuất hiện các vấn đề mà face recognition phải giải quyết. Với con người, đây vẫn là cùng một người. Nhưng với máy tính, mỗi điều kiện khác nhau lại tạo ra một hình ảnh hoàn toàn khác: góc mặt thay đổi, ánh sáng thay đổi, biểu cảm thay đổi, thậm chí chỉ cần đeo kính hoặc khẩu trang, bài toán cũng trở nên khó hơn đáng kể. Thử thách của face recognition không nằm ở việc nhớ khuôn mặt, mà là hiểu rằng rất nhiều hình ảnh trong các điều kiện khác nhau… thực ra vẫn thuộc về cùng một người."<br><br>**Phần B - Why Accuracy Matters:** "Vậy tại sao lại cần phải nhận diện được chính xác bất kể trong điều kiện môi trường nào? Một hệ thống face recognition không chỉ cần 'thông minh', mà còn phải cực kỳ chính xác và ổn định. Vì vậy, các hệ thống hiện đại cần một cách biểu diễn khuôn mặt mạnh và đáng tin cậy hơn. Hãy tưởng tượng: iPhone của bạn cần nhận diện bạn vào ban đêm khi gương mặt gần như tối om. Camera an ninh cần nhận ra bạn từ góc nghiêng khi bạn đi ngang qua. Hay hệ thống eKYC cần xác thực khuôn mặt trên ảnh chụp căn cước công dân với ảnh selfie của bạn. Tất cả những trường hợp này đều đòi hỏi độ chính xác gần như tuyệt đối."<br><br>**Phần C - Transition:** "Vậy làm thế nào để đạt được điều đó? Câu trả lời nằm ở cách biểu diễn khuôn mặt trong không gian đặc trưng." | **Phần A:** Grid 3x3 hoặc 4x4 với cùng 1 người trong nhiều điều kiện: góc nghiêng, ánh sáng sáng/tối, biểu cảm vui/bình thường, đeo kính/không, đeo khẩu trang/không, makeup. Chú thích: "Cùng một người, rất nhiều hình ảnh khác nhau".<br><br>**Phần B:** Ba icons với ví dụ real-world: iPhone (Face ID ban đêm), Camera an ninh (góc nghiêng), eKYC (selfie vs ảnh CCCD).<br><br>**Phần C:** Mũi tên chuyển tiếp → Embedding Space. | **Phần A:** Camera bắt đầu ở grid ảnh tổng thể, zoom in vào từng ảnh tuần tự, highlight sự khác biệt. Di chuyển theo grid layout. Pull back để show toàn bộ grid với chú thích.<br><br>**Phần B:** Transition sang 3 icons, pan qua lại giữa 3 icons, zoom in mỗi icon khi được giải thích.<br><br>**Phần C:** Fade transition, reveal embedding space concept. | Scene 2 → Scene 4 |
-| 4 | Embedding Space | **Phần A - City Map Analogy:** "Hãy tưởng tượng một thành phố được quy hoạch dựa trên mức độ tương đồng kiến trúc của các ngôi nhà. Những căn nhà có thiết kế giống nhau sẽ được đặt gần nhau và được quy hoạch vào cùng một khu. Các ngôi nhà càng có thiết kế kiến trúc giống nhau, vị trí của chúng trên bản đồ càng gần nhau. Kỹ thuật face recognition cũng hoạt động theo phương thức tương tự. Thay vì ghi nhớ từng pixel trên ảnh khuôn mặt, các hệ thống nhận diện học cách đặt mỗi khuôn mặt vào một không gian hình học, không gian đó được gọi là embedding space."<br><br>**Phần B - Embedding Concept:** "Mỗi khuôn mặt được chuyển đổi thành một điểm trong không gian này. Nhưng vị trí của điểm không được xác định một cách ngẫu nhiên, mà cơ bản được xác định bằng cách mã số hóa các đặc trưng trên khuôn mặt - được gọi là embedding vector, hay ngắn gọn là embedding. Như vậy có nghĩa là gì? Neural network sẽ phân tích các đặc trưng quan trọng trên khuôn mặt như cấu trúc mắt, hình dạng mũi, đường nét khuôn hàm, khoảng cách giữa các bộ phận… Sau đó chuyển toàn bộ thông tin đó thành một vector số, thể hiện ‘tọa độ kiến trúc’ của khuôn mặt trong embedding space. Nhưng nếu như không gian này có thêm các khuôn mặt khác theo thời gian thì các embedding cố định này có còn phản ánh đúng khoảng cách giữa các điểm nữa hay không? Để giải thích cho điều này thì phải nhấn mạnh rằng ý nghĩa quan trọng không nằm ở giá trị tuyệt đối của từng embedding, thứ thực sự có ý nghĩa là khoảng cách tương đối giữa chúng. Và có thể nói vị trí của các điểm trên embedding space không cố định. Trong giai đoạn đầu huấn luyện, các embedding gần như được phân bố ngẫu nhiên. Nhưng qua hàng triệu lần phát triển và cập nhật, neural network học cách tổ chức embedding space và tối ưu đồng thời một cách từ từ. Các khuôn mặt thuộc cùng một người sẽ được kéo lại gần nhau, trong khi các khuôn mặt của những người khác nhau sẽ bị đẩy ra xa. Kết quả là embedding space dần hình thành các cụm đặc trưng rõ ràng. Mhư vậy, bài toán face recognition không phải là bài tóan ghi nhớ được chính xác nhiều khuôn mặt để so sánh, mà thực chất là bài toán đo khoảng cách giữa các embedding trong  embedding space."<br><br>**Phần C - Transition:** "Bài toán thực sự bắt đầu sau khi hệ thống tạo được embedding space. Chất lượng của hệ thống face recognition phụ thuộc rất lớn vào cách embedding được tổ chức. Vậy làm thế nào để tạo ra một embedding space tốt? Làm thế nào để các cụm với các khuôn mặt tương đồng nhau vừa đủ chặt, nhưng các cụm với khuôn mặt khác nhau vẫn đủ xa để tách biệt rõ ràng với nhau? Đó là bài toán mà thuật toán ArcFace đang cố gắng giải quyết." | **Phần A:** Bản đồ thành phố từ trên cao với các khu nhà (các khu nhà có kiến trúc khác nhau, mỗi khu có màu sắc khác nhau). Dần dần texture ngôi nhà biến thành các điểm sáng, chỉ giữ lại cluster, distance, topology,...<br><br>**Phần B:** Morph animation từ các khu nhà thành các nhóm khuôn mặt người: Các khuôn mặt dần dần hiện lên, với các khuôn mặt nhìn giống nhau thì vị trí gần nhau, các khuôn mặt khác nhau thì xa nhau. (để người xem hiểu được embedding space là phiển bản được trừu tượng hóa của việc quy hoạch theo đặc trưng). Sau khi đã phân các khuôn mặt thành từng cụm, hiện và đường kẻ ranh giới giữa các cụm và label cho từng cụm.<br><br>**Phần C:** Highlight các điểm embedding, mũi tên chuyển tiếp → Softmax. | **Phần A:** Establishing shot: bản đồ thành phố tổng thể. Zoom in vào các khu vực, highlight "người gần nhau" và "người xa nhau". Morph animation: bản đồ → embedding space (warping effect). Zoom out để show toàn bộ embedding space.<br><br>**Phần B:** Camera bắt đầu từ hình ảnh khuôn mặt thực, zoom in và morph thành một điểm sáng trên mặt phẳng 2D. Camera nhẹ nhàng pan quanh để show các cluster từ nhiều góc khác nhau.<br><br>**Phần C:** Zoom in vào các điểm, show intra-class và inter-class distance. Pull back để reveal toàn bộ space, mũi tên chuyển tiếp. | Scene 3 → Scene 5 |
+| 4 | Embedding Space | **Phần A - City Map Analogy:** "Hãy tưởng tượng một thành phố được quy hoạch dựa trên mức độ tương đồng kiến trúc của các ngôi nhà. Những căn nhà có thiết kế giống nhau sẽ được đặt gần nhau và được quy hoạch vào cùng một khu. Các ngôi nhà càng có thiết kế kiến trúc giống nhau, vị trí của chúng trên bản đồ càng gần nhau. Kỹ thuật face recognition cũng hoạt động theo phương thức tương tự. Thay vì ghi nhớ từng pixel trên ảnh khuôn mặt, các hệ thống nhận diện học cách đặt mỗi khuôn mặt vào một không gian hình học, không gian đó được gọi là embedding space."<br><br>**Phần B - Embedding Concept:** "Mỗi khuôn mặt được chuyển đổi thành một điểm trong không gian này. Nhưng vị trí của điểm không được xác định một cách ngẫu nhiên, mà cơ bản được xác định bằng cách mã số hóa các đặc trưng trên khuôn mặt - được gọi là embedding vector, hay ngắn gọn là embedding. Như vậy có nghĩa là gì? Neural network sẽ phân tích các đặc trưng quan trọng trên khuôn mặt như cấu trúc mắt, hình dạng mũi, đường nét khuôn hàm, khoảng cách giữa các bộ phận… Sau đó chuyển toàn bộ thông tin đó thành một vector số, thể hiện 'tọa độ kiến trúc' của khuôn mặt trong embedding space. Nhưng nếu như không gian này có thêm các khuôn mặt khác theo thời gian thì các embedding cố định này có còn phản ánh đúng khoảng cách giữa các điểm nữa hay không? Để giải thích cho điều này thì phải nhấn mạnh rằng ý nghĩa quan trọng không nằm ở giá trị tuyệt đối của từng embedding, thứ thực sự có ý nghĩa là khoảng cách tương đối giữa chúng. Và có thể nói vị trí của các điểm trên embedding space không cố định. Trong giai đoạn đầu huấn luyện, các embedding gần như được phân bố ngẫu nhiên. Nhưng qua hàng triệu lần phát triển và cập nhật, neural network học cách tổ chức embedding space và tối ưu đồng thời một cách từ từ. Các khuôn mặt thuộc cùng một người sẽ được kéo lại gần nhau, trong khi các khuôn mặt của những người khác nhau sẽ bị đẩy ra xa. Kết quả là embedding space dần hình thành các cụm đặc trưng rõ ràng. Mhư vậy, bài toán face recognition không phải là bài tóan ghi nhớ được chính xác nhiều khuôn mặt để so sánh, mà thực chất là bài toán đo khoảng cách giữa các embedding trong  embedding space."<br><br>**Phần C - Transition:** "Bài toán thực sự bắt đầu sau khi hệ thống tạo được embedding space. Chất lượng của hệ thống face recognition phụ thuộc rất lớn vào cách embedding được tổ chức. Vậy làm thế nào để tạo ra một embedding space tốt? Làm thế nào để các cụm với các khuôn mặt tương đồng nhau vừa đủ chặt, nhưng các cụm với khuôn mặt khác nhau vẫn đủ xa để tách biệt rõ ràng với nhau? Đó là bài toán mà thuật toán ArcFace đang cố gắng giải quyết." | **Phần A:** Bản đồ thành phố từ trên cao với các khu nhà (các khu nhà có kiến trúc khác nhau, mỗi khu có màu sắc khác nhau). Dần dần texture ngôi nhà biến thành các điểm sáng, chỉ giữ lại cluster, distance, topology,...<br><br>**Phần B:** Morph animation từ các khu nhà thành các nhóm khuôn mặt người: Các khuôn mặt dần dần hiện lên, với các khuôn mặt nhìn giống nhau thì vị trí gần nhau, các khuôn mặt khác nhau thì xa nhau. (để người xem hiểu được embedding space là phiển bản được trừu tượng hóa của việc quy hoạch theo đặc trưng). Sau khi đã phân các khuôn mặt thành từng cụm, hiện và đường kẻ ranh giới giữa các cụm và label cho từng cụm.<br><br>**Phần C:** Highlight các điểm embedding, mũi tên chuyển tiếp → Softmax. | **Phần A:** Establishing shot: bản đồ thành phố tổng thể. Zoom in vào các khu vực, highlight "người gần nhau" và "người xa nhau". Morph animation: bản đồ → embedding space (warping effect). Zoom out để show toàn bộ embedding space.<br><br>**Phần B:** Camera bắt đầu từ hình ảnh khuôn mặt thực, zoom in và morph thành một điểm sáng trên mặt phẳng 2D. Camera nhẹ nhàng pan quanh để show các cluster từ nhiều góc khác nhau.<br><br>**Phần C:** Zoom in vào các điểm, show intra-class và inter-class distance. Pull back để reveal toàn bộ space, mũi tên chuyển tiếp. | Scene 3 → Scene 5 |
 | 5 | Softmax Introduction | "Bây giờ chúng ta sẽ tìm hiểu về softmax - hàm loss phổ biến nhất được sử dụng trong huấn luyện mạng nơ-ron nhận diện khuôn mặt. Softmax, hay còn gọi là normalized exponential, nhận đầu vào là một vector điểm embedding và biến đổi thành phân phối xác suất cho các lớp khác nhau. Công thức rất đơn giản: mỗi điểm embedding được nhân với weight matrix, sau đó tính exponential và chuẩn hóa để được tổng bằng 1. Trong không gian 2D, điều này tương đương với việc vẽ đường ranh giới quyết định - một đường thẳng phân tách các vùng thuộc về mỗi lớp. Mục tiêu của softmax là đưa xác suất của lớp đúng lên gần 1 nhất có thể." | (1) Hiển thị công thức softmax ở giữa màn hình: p(y=class) = exp(W·x+b) / Σexp(W·x+b). (2) Minh họa trên mặt phẳng 2D: các vector từ gốc tọa độ đến các điểm embedding, weight vectors W được vẽ, đường ranh giới quyết định (decision boundary) xuất hiện. (3) Animation: khi một điểm mới được thêm vào, xác suất của các lớp thay đổi theo softmax. | Camera bắt đầu ở góc rộng để show toàn bộ công thức, sau đó zoom in vào từng phần của công thức khi được giải thích. Di chuyển từ công thức sang 2D plane view để minh họa geometric interpretation. | Scene 4 → Scene 6 |
 | 6 | Softmax Limitation | **Phần A - Classroom Analogy:** "Để dễ hình dung, hãy tưởng tượng các đặc điểm trên khuôn mặt như những học sinh đang ngồi trong lớp. Với softmax, các bạn cùng nhóm thường ngồi khá gần nhau — nhưng nếu ngồi quá sát, chỉ cần dịch chuyển một chút thôi, ranh giới nhóm đã có thể bị lẫn lộn. Tương tự, trong embedding space, nếu các danh tính nằm quá gần nhau, chỉ cần một chút nhiễu hoặc thay đổi ánh sáng cũng có thể khiến hệ thống nhầm lẫn."<br><br>**Phần B - Limitation:** "Tuy nhiên, softmax có một điểm yếu nghiêm trọng. Trong một hệ thống softmax thông thường, các điểm cùng một người thường nằm gần nhau, nhưng ranh giới giữa các người khác nhau lại khá mờ nhạt. Hãy nhìn vào những cluster này: mặc dù cùng một lớp, các điểm chỉ được phép nằm đủ gần tâm của lớp đó để có xác suất cao nhất. Không có cơ chế nào khuyến khích các điểm cùng lớp phải thật gần nhau, hay các điểm khác lớp phải thật xa nhau. Những điểm ở vùng biên có thể dễ dàng bị phân loại sai vì ranh giới quyết định không đủ rõ ràng. Đây chính là điểm yếu cốt lõi mà các nhà nghiên cứu muốn cải thiện."<br><br>**Phần C - Safe Margin:** "Một embedding space tốt không chỉ cần đúng — mà còn phải có khoảng cách an toàn giữa các danh tính." | **Phần A:** Sơ đồ lớp học với các nhóm học sinh ngồi gần nhau. Animation: một học sinh dịch chuyển nhẹ → có thể bị nhầm nhóm. Tương đương với embedding space: các điểm cluster quá gần nhau.<br><br>**Phần B:** Hiển thị các cluster chồng lấn nhau trên mặt phẳng 2D, ranh giới mờ nhạt được vẽ bằng nét đứt. (1) Zoom in vào vùng ranh giới giữa hai cluster, highlight các điểm nằm ở vùng tranh chấp. (2) Show animation: một điểm gần ranh giới di chuyển qua ranh giới → bị phân loại sai. (3) So sánh khoảng cách intra-class (trong lớp) với inter-class (giữa các lớp).<br><br>**Phần C:** Highlight khoảng cách giữa các cluster, thêm chú thích "khoảng cách an toàn" với margin buffer. | **Phần A:** Camera bắt đầu ở sơ đồ lớp học tổng thể. Zoom in vào một nhóm học sinh, highlight sự gần gũi. Animation dịch chuyển, show confusion. Transition từ lớp học → embedding space.<br><br>**Phần B:** Camera zoom in sâu vào vùng ranh giới mờ giữa hai cluster. Pan ngang để duyệt qua nhiều vùng ranh giới. Pull back để show bird's eye view.<br><br>**Phần C:** Zoom in vào khoảng cách giữa hai cluster, highlight margin buffer, fade transition sang Evolution. | Scene 5 → Scene 7 |
 | 7 | Evolution | "Để cải thiện khả năng phân biệt, các nhà nghiên cứu đã tập trung vào việc tối ưu hóa góc angular trong không gian đặc trưng. Hành trình bắt đầu với FaceNet vào năm 2015, sử dụng triplet loss để học cách đặt các điểm cùng người gần nhau và khác người xa nhau. Tiếp theo là SphereFace năm 2017, thêm vào angular margin để tăng khoảng cách giữa các lớp. Rồi CosFace năm 2018 tối ưu hóa trực tiếp cosine similarity. Và cuối cùng là ArcFace, kết hợp tất cả ưu điểm và trở thành tiêu chuẩn trong ngành." | Timeline đường ngang với 4 milestone: FaceNet → SphereFace → CosFace → ArcFace. Mỗi mốc có icon và brief description, animation xuất hiện lần lượt từ trái sang phải. Đối với mỗi milestone, show thêm brief visualization của phương pháp: triplet loss (anchor-positive-negative), angular margin visualization. | Camera bắt đầu ở bên trái (FaceNet), sau đó smoothly track sang phải theo timeline, dừng lại ở mỗi milestone khi được giải thích. Cuối cùng camera zoom out để show toàn bộ timeline trong một khung hình. | Scene 6 → Scene 8 |
-| 8 | **ArcFace Core** | **Phần A - Abstract intro:** "Bây giờ chúng ta đến với phần quan trọng nhất của video: ArcFace. Trước tiên, hãy hiểu ArcFace ở mức cơ bản nhất. ArcFace là một phương pháp huấn luyện mạng nơ-ron nhận diện khuôn mặt, được phát triển năm 2019. Chức năng của nó rất đơn giản: nó dạy mạng nơ-ron cách phân biệt khuôn mặt chính xác hơn. So với softmax, điểm khác biệt nằm ở cách ArcFace đánh giá 'mức độ khác nhau' giữa các khuôn mặt. Softmax chỉ cần người đúng có điểm cao hơn người khác một chút. Còn ArcFace thực sự khuếch đại sự khác biệt: người đúng phải 'nổi bật hơn rất nhiều' so với tất cả những người còn lại. Điều này giống như việc thay vì chỉ nói 'hai người này hơi khác nhau', ArcFace nói 'hai người này KHÁC NHAU RÕ RỆT'. ArcFace làm được điều đó bằng cách thêm khoảng cách an toàn giữa các danh tính."<br><br>**Phần B - Why Angle?:** "Nhưng tại sao lại dùng góc? Hãy tưởng tượng bạn đứng trong một căn phòng và đo khoảng cách đến một người khác. Nếu bạn đứng gần cửa sổ, khoảng cách Euclidean (đường thẳng) sẽ bị ảnh hưởng bởi vị trí của bạn trong phòng. Nhưng nếu bạn chỉ đo góc mà bạn phải quay đầu để nhìn người đó — góc đó sẽ ổn định hơn, không phụ thuộc vào vị trí tuyệt đối của bạn. Tương tự, trong nhận diện khuôn mặt, khoảng cách góc (angular distance) giữa các vector đặc trưng sẽ ổn định hơn với các thay đổi về điều kiện ánh sáng hay khoảng cách vật lý. Đây là lý do ArcFace tập trung vào angular margin thay vì Euclidean distance."<br><br>**Phần C - Visual comparison:** "Hãy cùng nhìn vào hình ảnh để hiểu rõ hơn sự khác biệt này. Bên trái là softmax: các cluster nằm gần nhau, ranh giới mờ nhạt. Bên phải là ArcFace: các cluster được đẩy xa nhau, ranh giới rõ ràng hơn nhiều."<br><br>**Phần D - 3D Visualization:** "Bây giờ hãy nhìn vào hình cầu ba chiều này để hiểu cách ArcFace thực sự hoạt động. Mỗi điểm trên bề mặt hình cầu đại diện cho một khuôn mặt, và khoảng cách từ tâm đến điểm được chuẩn hóa bằng 1. ArcFace thêm một margin - tức là một khoảng đệm - vào góc giữa điểm đó và tâm của lớp. Khi margin được thêm vào, điểm bị đẩy ra xa hơn, tăng khoảng cách với các lớp khác. Đây chính là cách ArcFace tạo ra ranh giới rõ ràng mà bạn thấy ở hình bên phải." | **Phần A:** Màn hình chia đôi - bên trái Softmax với cluster mờ, bên phải ArcFace với cluster tách biệt. Chú thích "Hơi khác nhau" vs "KHÁC NHAU RÕ RỆT".<br><br>**Phần B:** Sơ đồ căn phòng với hai người đứng ở các vị trí khác nhau. Highlight góc quay đầu thay vì khoảng cách tuyệt đối. Tương đương với hình cầu với các điểm và góc θ.<br><br>**Phần C:** Animation transition, mũi tên chỉ từ Softmax sang ArcFace.<br><br>**Phần D:** Hình cầu 3D với các điểm embedding, góc θ được vẽ rõ ràng, animation cho thấy điểm bị "đẩy" ra xa khi thêm margin. Camera xoay nhẹ quanh hình cầu để show depth. | **Phần A:** Camera ở vị trí center, dolly out nhẹ để show cả hai bên. Pan nhẹ sang trái (2s), rồi sang phải (2s) để highlight sự khác biệt.<br><br>**Phần B:** Camera bắt đầu với sơ đồ căn phòng. Zoom in vào hai người, highlight góc quay đầu. Transition sang hình cầu, show angular distance. Camera xoay nhẹ quanh hình cầu để show stability của angular distance.<br><br>**Phần C:** Zoom out để show comparison tổng thể, fade transition vào hình 3D.<br><br>**Phần D:** Camera ở vị trí ngoài hình cầu (establishing shot), sau đó slowly dolly in vào bề mặt hình cầu. Camera xoay quanh hình cầu với góc nhìn thay đổi liên tục để show depth. Zoom in vào góc θ khi được giải thích, sau đó zoom out để show toàn cảnh. | Scene 7 → Scene 9 |
+| 8 | **ArcFace Core** | **Phần A - Abstract intro:** "Bây giờ chúng ta đến với phần quan trọng nhất của video: ArcFace. Trước tiên, hãy hiểu ArcFace ở mức cơ bản nhất. ArcFace là một phương pháp huấn luyện mạng nơ-ron nhận diện khuôn mặt, được phát triển năm 2019. Chức năng của nó rất đơn giản: nó dạy mạng nơ-ron cách phân biệt khuôn mặt chính xác hơn. So với softmax, điểm khác biệt nằm ở cách ArcFace đánh giá 'mức độ khác nhau' giên các khuôn mặt. Softmax chỉ cần người đúng có điểm cao hơn người khác một chút. Còn ArcFace thực sự khuếch đại sự khác biệt: người đúng phải 'nổi bật hơn rất nhiều' so với tất cả những người còn lại. Điều này giống như việc thay vì chỉ nói 'hai người này hơi khác nhau', ArcFace nói 'hai người này KHÁC NHAU RÕ RỆT'. ArcFace làm được điều đó bằng cách thêm khoảng cách an toàn giữa các danh tính."<br><br>**Phần B - Why Angle?:** "Nhưng tại sao lại dùng góc? Hãy tưởng tượng bạn đứng trong một căn phòng và đo khoảng cách đến một người khác. Nếu bạn đứng gần cửa sổ, khoảng cách Euclidean (đường thẳng) sẽ bị ảnh hưởng bởi vị trí của bạn trong phòng. Nhưng nếu bạn chỉ đo góc mà bạn phải quay đầu để nhìn người đó — góc đó sẽ ổn định hơn, không phụ thuộc vào vị trí tuyệt đối của bạn. Tương tự, trong nhận diện khuôn mặt, khoảng cách góc (angular distance) giữa các vector đặc trưng sẽ ổn định hơn với các thay đổi về điều kiện ánh sáng hay khoảng cách vật lý. Đây là lý do ArcFace tập trung vào angular margin thay vì Euclidean distance."<br><br>**Phần C - Visual comparison:** "Hãy cùng nhìn vào hình ảnh để hiểu rõ hơn sự khác biệt này. Bên trái là softmax: các cluster nằm gần nhau, ranh giới mờ nhạt. Bên phải là ArcFace: các cluster được đẩy xa nhau, ranh giới rõ ràng hơn nhiều."<br><br>**Phần D - 3D Visualization:** "Bây giờ hãy nhìn vào hình cầu ba chiều này để hiểu cách ArcFace thực sự hoạt động. Mỗi điểm trên bề mặt hình cầu đại diện cho một khuôn mặt, và khoảng cách từ tâm đến điểm được chuẩn hóa bằng 1. ArcFace thêm một margin - tức là một khoảng đệm - vào góc giữa điểm đó và tâm của lớp. Khi margin được thêm vào, điểm bị đẩy ra xa hơn, tăng khoảng cách với các lớp khác. Đây chính là cách ArcFace tạo ra ranh giới rõ ràng mà bạn thấy ở hình bên phải." | **Phần A:** Màn hình chia đôi - bên trái Softmax với cluster mờ, bên phải ArcFace với cluster tách biệt. Chú thích "Hơi khác nhau" vs "KHÁC NHAU RÕ RỆT".<br><br>**Phần B:** Sơ đồ căn phòng với hai người đứng ở các vị trí khác nhau. Highlight góc quay đầu thay vì khoảng cách tuyệt đối. Tương đương với hình cầu với các điểm và góc θ.<br><br>**Phần C:** Animation transition, mũi tên chỉ từ Softmax sang ArcFace.<br><br>**Phần D:** Hình cầu 3D với các điểm embedding, góc θ được vẽ rõ ràng, animation cho thấy điểm bị "đẩy" ra xa khi thêm margin. Camera xoay nhẹ quanh hình cầu để show depth. | **Phần A:** Camera ở vị trí center, dolly out nhẹ để show cả hai bên. Pan nhẹ sang trái (2s), rồi sang phải (2s) để highlight sự khác biệt.<br><br>**Phần B:** Camera bắt đầu với sơ đồ căn phòng. Zoom in vào hai người, highlight góc quay đầu. Transition sang hình cầu, show angular distance. Camera xoay nhẹ quanh hình cầu để show stability của angular distance.<br><br>**Phần C:** Zoom out để show comparison tổng thể, fade transition vào hình 3D.<br><br>**Phần D:** Camera ở vị trí ngoài hình cầu (establishing shot), sau đó slowly dolly in vào bề mặt hình cầu. Camera xoay quanh hình cầu với góc nhìn thay đổi liên tục để show depth. Zoom in vào góc θ khi được giải thích, sau đó zoom out để show toàn cảnh. | Scene 7 → Scene 9 |
 | 9 | Why It Works | "ArcFace hoạt động hiệu quả vì nó trực tiếp tối ưu hóa geometry của không gian đặc trưng. Hãy so sánh hai phía màn hình. Bên trái là softmax thông thường: các cluster ở gần nhau, ranh giới mờ, một số điểm nằm ở vùng tranh chấp. Bên phải là ArcFace: các cluster được đẩy ra xa hơn, ranh giới rõ ràng hơn nhiều, khoảng cách angular giữa các lớp tăng lên đáng kể. Chính vì khoảng cách lớn hơn này mà ArcFace có thể phân biệt chính xác hơn, ngay cả với những khuôn mặt tương đối giống nhau." | Màn hình chia đôi: bên trái softmax với cluster gần nhau, bên phải ArcFace với cluster tách biệt rõ ràng. Animation cho thấy sự thay đổi khi chuyển từ softmax sang ArcFace. Đo lường khoảng cách inter-class ở cả hai bên để so sánh trực quan. | Camera bắt đầu ở chính giữa màn hình, sau đó tách ra hai bên (dolly out đồng thời) để reveal cả hai nửa màn hình. Pan nhẹ qua lại giữa hai bên để highlight sự khác biệt. Cuối cùng camera đứng yên để show comparison. | Scene 8 → Scene 10 |
 | 10 | Applications | "Hệ thống embedding khuôn mặt được ứng dụng rộng rãi trong đời sống hàng ngày. Từ smartphone với tính năng Face ID, đến hệ thống ATM nhận diện khách hàng, từ sân bay tự động hóa quy trình làm thủ tục, đến mạng xã hội tự động gắn thẻ bạn bè trong ảnh. Thậm chí trong y tế, công nghệ này còn được dùng để hỗ trợ chẩn đoán bệnh di truyền dựa trên đặc điểm khuôn mặt. ArcFace đã trở thành nền tảng cho hầu hết các ứng dụng nhận diện khuôn mặt hiện đại nhờ độ chính xác và tính ổn định vượt trội." | Montage cinematic với các icon và hình ảnh minh họa: smartphone, ATM, sân bay, mạng xã hội, y tế. Background nhẹ nhàng với hiệu ứng transition mượt mà. | Camera di chuyển theo dạng parallax: background (blur network connections) di chuyển chậm hơn foreground (icons/illustrations). Pan nhẹ nhàng từ trái sang phải khi duyệt qua các ứng dụng. | Scene 9 → Scene 11 |
 | 11 | Closing | "Từ những pixel đơn giản, mạng nơ-ron đã xây dựng nên một không gian hình học phức tạp để biểu diễn khuôn mặt. ArcFace, với ý tưởng thêm margin vào góc angular, đã giải quyết bài toán nhận diện khuôn mặt một cách thanh lịch và hiệu quả. Hy vọng video này đã giúp bạn hiểu rõ hơn về cách máy tính 'nhìn' và 'nhận ra' khuôn mặt của chúng ta. Cảm ơn bạn đã theo dõi!" | Pullback camera từ embedding space ra toàn cảnh, dần dần hiện ra network architecture ở background, fade to black với logo. Subtitle cuối cùng xuất hiện. | Camera bắt đầu ở gần một điểm embedding (zoom in), sau đó zoom out từ từ để reveal toàn bộ embedding space, tiếp tục zoom out để show network architecture ở background, và cuối cùng zoom out hoàn toàn để fade to black. | Scene 10 → End |
