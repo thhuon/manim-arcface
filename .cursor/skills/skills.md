@@ -1,6 +1,7 @@
 # ManimGL ArcFace Animation Project — Coding Rules
 
-This skill file defines all rules for the ManimGL ArcFace educational animation project.
+>This file defines all rules for the ManimGL ArcFace educational animation project.
+>All rules below are **mandatory** for every scene file. Read them before writing code.
 
 ---
 
@@ -15,321 +16,193 @@ This skill file defines all rules for the ManimGL ArcFace educational animation 
 
 ---
 
-## CRITICAL: Graphical & Aesthetic Guidelines
+## Rule 1: ABSOLUTE TYPOGRAPHY — NO PLAIN TEXT
 
+> **STRICTLY PROHIBITED:** `Text(...)`, plain system fonts, any non-LaTeX text rendering.
 
-## IMPORTANT: No Manual Shape Primitives for Complex Objects
-
-> **DO NOT** manually code complex realistic objects (smartphones, laptops, lock icons) using native Manim shapes (arcs, polygons, rectangles). Instead, **STRICTLY** combine external SVG assets with native Manim mathematical components.
-
-### Background
+Every piece of text — titles, labels, equations, subtitles — **MUST** be written in LaTeX:
 
 ```python
-# Use dark grey background - NOT pure black
-self.camera.background_color = "#1C1C1C"  # Dark grey
-# Alternative: "#111111" for very dark
+# ✅ CORRECT — LaTeX with raw string
+main_title = Tex(r"\text{Understanding ArcFace}", font_size=72, color=WHITE)
+subtitle   = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
+
+# ❌ WRONG — plain Text object
+title = Text("Understanding ArcFace", font_size=72)   # FORBIDDEN
+label = Text("embedding", font_size=24)              # FORBIDDEN
 ```
 
-### Color Palette (Minimalist Premium Theme)
-
+**Font size reference (144pt = 1 manim unit height):**
 ```python
-# Neutral objects
-WHITE = "#FFFFFF"
-
-# Secondary elements
-GREY = "#888888"
-DARK_GREY = "#444444"
-
-# Data elements - Vibrant but clean Pastel/Neon tones
-CYAN = "#00FFFF"
-TEAL = "#008080"
-GOLD = "#FFD700"
-
-# Additional accent colors
-ACCENT_BLUE = "#4fc3f7"  # Sky blue
+TITLE_SIZE     = 72   # Main title
+SUBTITLE_SIZE = 32   # Secondary text
+EQUATION_SIZE = 72   # Math expressions
+LABEL_SIZE    = 24   # Small labels
 ```
 
-### Line Weight (Technical Blueprint Appearance)
-
-```python
-# Keep stroke_width THIN and SHARP
-# Ideal range: 1.5 to 2.5
-# AVOID thick, cartoonish outlines
-
-# For outlines
-stroke_width = 1.5  # Thin technical lines
-stroke_width = 2.0  # Standard thin
-stroke_width = 2.5  # Maximum for emphasis
-```
-
-### Fill Opacity
-
-```python
-# Objects should primarily be OUTLINES
-fill_opacity = 0
-
-# If shading is required, keep HIGHLY TRANSPARENT
-fill_opacity = 0.05   # Very subtle
-fill_opacity = 0.1    # Barely visible
-```
+**Always use `r"..."` (raw string)** to prevent LaTeX backslash syntax errors.
 
 ---
 
-## Scene Asset Specification & Composition
+## Rule 2: HYBRID VECTOR ASSETS — NO PRIMITIVE CODE FOR COMPLEX SHAPES
 
-### External SVG Elements
+> **STRICTLY PROHIBITED:** Drawing smartphones, laptops, padlocks, icons, or any real-world object using `Arc`, `Line`, `Polygon`, `Circle`, `Rectangle`, or any combination of primitive shapes.
 
-```python
-# Import CLEAN, MINIMALIST OUTLINE icons for:
-# - Laptop
-# - Smartphone
-# - Secure padlock
-
-# Store SVG files in scenes/decorations/
-laptop_icon = SVGMobject("scenes/decorations/laptop.svg")
-phone_icon = SVGMobject("scenes/decorations/phone.svg")
-lock_icon = SVGMobject("scenes/decorations/lock.svg")
-```
-
-### Arrangement
+All complex objects **MUST** be SVG files imported via `SVGMobject`:
 
 ```python
-# Group devices in VGroup
-devices = VGroup(laptop_icon, phone_icon)
-devices.arrange(RIGHT, buff=2)
-devices.center()
+def get_svg_path(filename: str) -> str:
+    import os
+    return os.path.join(
+        os.path.dirname(__file__), "decorations", filename
+    )
 
-# Place lock on device screen
-lock_icon.move_to(phone_icon.get_center())
+def white_svg(filename: str, height: float):
+    """Load SVG as crisp solid-white flat vector."""
+    return SVGMobject(
+        file_name=get_svg_path(filename),
+        height=height,
+    ).set_fill(WHITE, 1.0).set_stroke(WHITE, 1.5)
+
+# Usage
+devices   = white_svg("devices.svg",     height=2.5)
+lock      = white_svg("lock.svg",        height=1.0)
+face_id   = white_svg("face-id.svg",     height=1.0)
+lock_open = white_svg("lock-open.svg",   height=1.0)
 ```
 
-### Native Manim Elements (Mathematical Layer)
-
+**Color & Solid Structure Rule (MANDATORY for every SVGMobject):**
 ```python
-# Background data streams - matrix layout or binary streams
-# Use MathTex with dark grey color and reduced opacity
-data_stream = MathTex("0 1 0 1 1 0", color="#444444", opacity=0.3)
-
-# Glowing scanning bar/beam - thin line with neon color
-scan_bar = Line(start, end, stroke_color=CYAN, stroke_width=1.5)
+.set_fill(WHITE, 1.0)    # Solid white fill, opacity 100%
+.set_stroke(WHITE, 1.5)  # Thin 1.5-width white outline
 ```
+This guarantees crisp, solid white flat vectors and prevents broken outlines or unexpected fills.
+
+**SVG storage:** `scenes/decorations/*.svg`
 
 ---
 
-## Animation & Camera Directives
+## Rule 3: ORTHOGRAPHIC CAMERA — ZERO CAMERA MODIFICATIONS
 
-### Step 1: SVG Rendering
+> **STRICTLY PROHIBITED:** 3D camera orientation, `.reorient()`, `.rotate()` on camera frame, `phi_degrees`, `theta_degrees`, `ThreeDScene` for camera control.
 
-```python
-# Use Create() or Write() for elegant vector path tracing
-self.play(Create(svg_object), run_time=2.5)
-self.play(Write(svg_object), run_time=2.5)
-```
-
-### Step 2: 2D to 3D Morph/Transition
+**Base class rule:** Always extend `Scene`, never `ThreeDScene` (unless a scene genuinely needs a 3D sphere/unit-circle that absolutely requires `ThreeDScene`, and even then the camera frame must never be rotated).
 
 ```python
-# MUST use ReplacementTransform to clean memory space
-self.play(
-    ReplacementTransform(svg_objects, wireframe_3d),
-    run_time=2
-)
-```
+# ✅ CORRECT
+class MyScene(Scene):
+    def construct(self):
+        self.camera.background_color = "#111111"   # 3B1B dark grey
 
-### Step 3: Camera Motion (3D Scenes)
-
-```python
-# Use MovingCameraScene or ThreeDScene for 3D camera hooks
+# ❌ WRONG — no camera modifications allowed
 class MyScene(ThreeDScene):
     def construct(self):
-        # Smooth camera frame movement
-        self.play(
-            self.frame.animate.move_to(target_position),
-            run_time=2,
-            rate_func=smooth
-        )
-
-        # Zoom in
-        self.play(
-            self.frame.animate.scale(0.8),
-            run_time=1.5
-        )
-
-        # Orbital rotation around Y-axis
-        self.play(
-            self.frame.animate.reorient(theta_degrees=30),
-            run_time=3
-        )
-
-        # Continuous ambient rotation
-        self.frame.add_updater(lambda m, dt: m.increment_theta(-0.1 * dt))
+        self.frame.reorient(phi_degrees=70, ...)    # FORBIDDEN
+        self.frame.animate.rotate(...)              # FORBIDDEN
 ```
 
-### Pacing Rules
+**Background:** Always `self.camera.background_color = "#111111"` (dark grey, 3B1B aesthetic). Never pure black.
+
+---
+
+## Rule 4: ZERO OVERLAP — NO HARDCODED COORDINATES
+
+> **STRICTLY PROHIBITED:** Hardcoded absolute coordinates like `[2, 1, 0]`, `np.array([3, 0, 0])`, `move_to([x, y, 0])`.
+
+**Always use relative positioning:**
 
 ```python
-# Camera transitions
-rate_func=smooth
+# ✅ CORRECT — VGroup.arrange handles spacing automatically
+left_group   = VGroup(svg1, svg2).arrange(DOWN, buff=0.3)
+center_group = VGroup(icon, arrow).arrange(DOWN, buff=0.3)
 
-# Continuous processes (data streaming)
-rate_func=linear
+diagram = VGroup(left_group, center_group, right_group)
+diagram.arrange(RIGHT, buff=0.8)
+diagram.move_to(ORIGIN)    # only ORIGIN is allowed as anchor
 
-# All major animations
-run_time=2-3
+# Title block
+title_block = VGroup(main_title, subtitle)
+title_block.arrange(DOWN, buff=0.4)
+title_block.to_edge(DOWN, buff=1.0)
+
+# ✅ CORRECT — .next_to for fine positioning
+label.next_to(arrow, UP, buff=0.3)
+
+# ❌ WRONG — absolute numbers
+obj.move_to([2, 1, 0])    # FORBIDDEN
+arrow.shift(RIGHT * 2.5)  # allowed if relative to another object, not absolute
+```
+
+`.arrange()`, `.next_to()`, `.to_edge()`, `.shift()` from an existing object's edge — these mathematically guarantee zero physical overlap.
+
+---
+
+## Rule 5: ANIMATION — USE ShowCreation (NOT Create)
+
+> ManimGL does **not** have `Create`; use `ShowCreation` for SVG/vector path tracing.
+
+```python
+# ✅ CORRECT
+self.play(ShowCreation(svg_object), run_time=2.5)
+
+# ❌ WRONG
+self.play(Create(svg_object), ...)    # Create does not exist in ManimGL
+```
+
+**Animation patterns:**
+```python
+FadeIn(obj, shift=UP)           # Title reveal with upward slide
+FadeOut(obj)                    # Clean disappear
+ShowCreation(obj)               # SVG/vector path trace
+ReplacementTransform(a, b)     # Clean memory transition
+TransformMatchingShapes(a, b)   # Shape-preserving morph
+FadeTransform(a, b)            # Cross-fade between objects
+Write(tex_obj)                  # LaTeX writing animation
+```
+
+**Pacing:**
+```python
+rate_func=smooth   # Camera transitions, morphs
+rate_func=linear   # Continuous processes (data streams)
+run_time=2-3       # Standard for most animations
+run_time=4-6       # Camera/slow reveals
 ```
 
 ---
 
-## Typography
+## Background & Color Palette
 
 ```python
-# For equations and LaTeX
-title = Tex(r"\text{Your Text}", font_size=72, color=WHITE)
+# Background — always dark grey, NOT pure black
+self.camera.background_color = "#111111"   # 3B1B dark grey
 
-# For descriptions - use Consolas font
-code_text = Text("description", font="Consolas", font_size=24)
+# Neutral objects — WHITE
+WHITE     = "#FFFFFF"
 
-# Font size reference (144pt = 1 manim unit height)
-EQUATION_SIZE = 72
-DESCRIPTION_SIZE = 24
-TITLE_SIZE = 72
-SUBTITLE_SIZE = 32
+# Secondary elements
+GREY      = "#888888"
+DARK_GREY = "#444444"
+
+# Accent colors (use sparingly)
+CYAN      = "#00FFFF"
+TEAL      = "#008080"
+GOLD      = "#FFD700"
 ```
+
+**Line weight:** `stroke_width = 1.5` (thin, technical). Range 1.5–2.5 max.
 
 ---
 
-## Animation Patterns
+## Typography (LaTeX Only)
 
-### Smooth Transforms
 ```python
-FadeTransform(source, target)
-ReplacementTransform(source, target)  # Preferred for clean transitions
-TransformMatchingShapes(source, target, path_arc=PI/2)
-Create(mobject)                       # SVG/vector path tracing
-Write(mobject)                        # Text writing
-```
+# Equations and titles — ALWAYS via Tex/MathTex
+main_title = Tex(r"\text{Understanding ArcFace}", font_size=72, color=WHITE)
+subtitle   = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
+equation   = MathTex(r"f(x) = \frac{1}{1 + e^{-x}}", font_size=48, color=WHITE)
 
-### Grid and Plane Reveals
-```python
-grid = NumberPlane((-10, 10), (-5, 5))
-grid.set_stroke(GREY, 1.5)  # Thin lines
-grid.add_coordinate_labels(font_size=24)
-self.play(Create(grid))  # Use Create instead of ShowCreation
-```
-
-### Matrix/Transform Animations
-```python
-self.play(grid.animate.apply_matrix(matrix), run_time=3, rate_func=smooth)
-```
-
-### Color Gradients
-```python
-grid.set_submobject_colors_by_gradient(CYAN, TEAL, GOLD)
-```
-
-### Dynamic Values and Updaters
-```python
-ValueTracker() + always_redraw()
-self.play(x_tracker.animate.set_value(new_val))
-```
-
-### Clustered Animations
-```python
-AnimationGroup()
-LaggedStart()           # Stagger animations
-LaggedStartMap()        # Map animation to group
-```
-
-### Text Animations
-```python
-Write(text)              # Write appearance
-FadeIn(text, UP)        # Fade in from direction
-FadeOut(text, shift=DOWN)
-```
-
-### Geometric Reveals
-```python
-Create()         # Vector path creation (preferred)
-ShowCreation()   # Legacy creation
-GrowArrow()
-MoveAlongPath()
-Rotate()
-```
-
----
-
-## Visual Style Rules
-
-### 3B1B Visual Principles
-1. **Minimal Text** — Explain through geometry, not words
-2. **Clean Backgrounds** — Dark backgrounds make colors pop
-3. **Slow Reveals** — Let viewers absorb each concept
-4. **Smooth Camera** — Use `run_time=3-6` for major movements
-5. **Backstroke** — Add subtle outlines for readability (if needed on complex backgrounds)
-
-### Arranging and Positioning
-```python
-group.arrange(RIGHT)
-group.to_edge(UP)
-vgroup.arrange(DOWN, buff=0.8)
-```
-
----
-
-## Transitions
-
-### Between Scenes
-```python
-# 1-second fade to black → fade in new scene
-self.wait(0.5)
-self.play(FadeOut(VGroup(objects...)))
-self.play(FadeIn(new_objects...))
-```
-
-### Camera Reset
-```python
-self.frame.animate.move_to(ORIGIN)
-self.frame.reorient(phi_degrees=70, theta_degrees=-45)
-```
-
----
-
-## 3D Scene Guidelines
-
-### When to Use ThreeDScene
-- Scene 7: Evolution (timeline with 3D elements)
-- Scene 8: ArcFace Core (hypersphere visualization)
-- Any scene requiring sphere/unit circle visualizations
-
-### Sphere and Surface
-```python
-# Wireframe sphere
-sphere = Sphere(radius=1.5, resolution=(12, 24))
-sphere_mesh = SurfaceMesh(sphere, stroke_color=CYAN, stroke_opacity=0.6)
-sphere_mesh.set_stroke(width=1.5)  # Thin lines
-
-# Glowing dots on surface
-point_cloud = GlowDots(
-    points=np.array(points_list),
-    radius=0.08,
-    glow_factor=2.0,
-    color=CYAN
-)
-```
-
-### 3D Face Wireframe (from scene00)
-```python
-sphere = Sphere(radius=1.5, resolution=(12, 24))
-sphere_mesh = SurfaceMesh(sphere, stroke_color="#4fc3f7", stroke_opacity=0.6)
-sphere_mesh.set_stroke(width=1.5)
-
-# Glowing points with thin lines
-point_cloud = GlowDots(
-    points=np.array(points),
-    radius=0.08,
-    glow_factor=2.0,
-    color="#4fc3f7"
-)
+# ❌ Text() is FORBIDDEN for any visible text
+label = Text("embedding")   # NEVER
 ```
 
 ---
@@ -339,20 +212,16 @@ point_cloud = GlowDots(
 ```
 manim-arcface-2/
 ├── requirements.txt
-├── example_scenes.py          # Reference examples
-├── main.py                    # Scene order, config, render
-├── videos/                    # Output directory
 ├── manimlib/                  # ManimGL core library
 └── scenes/
     ├── __init__.py
-    ├── decorations/           # SVG assets
-    │   ├── laptop.svg
-    │   ├── phone.svg
+    ├── decorations/           # SVG assets (white_svg() loader)
+    │   ├── devices.svg
     │   ├── lock.svg
-    │   └── 3b1b_accent.svg
+    │   ├── lock-open.svg
+    │   └── face-id.svg
     ├── scene00_introduction.py
     ├── scene01_hook.py
-    ├── scene02_pipeline.py
     └── ...
 ```
 
@@ -361,87 +230,33 @@ manim-arcface-2/
 ## Render Commands
 
 ```bash
-# Preview (with preview window)
-manimgl main.py SceneName -s
+# Write to video file (medium quality 720p)
+python3 -m manimlib scenes/SceneFile.py SceneName -w -m
 
-# Write to video file
-LD_LIBRARY_PATH=/home/aster/.local/lib:$LD_LIBRARY_PATH manimgl main.py SceneName -w
+# Preview (with window)
+python3 -m manimlib scenes/SceneFile.py SceneName
 
-# Write and open after render
-manimgl main.py SceneName -w -o
+# HD 1080p
+python3 -m manimlib scenes/SceneFile.py SceneName -w --hd
 ```
 
 ---
 
-## Common Patterns
+## Scene Flow (Total Arc)
 
-### GlowDots Creation
-```python
-import numpy as np
-np.random.seed(42)  # For reproducibility
-n_points = 30
-points_on_sphere = []
-
-for _ in range(n_points):
-    theta = np.random.uniform(0, 2 * PI)
-    phi = np.random.uniform(0, PI)
-    x = radius * np.sin(phi) * np.cos(theta)
-    y = radius * np.cos(phi)
-    z = radius * np.sin(phi) * np.sin(theta)
-    points_on_sphere.append([x, y, z])
-
-point_cloud = GlowDots(
-    points=np.array(points_on_sphere),
-    radius=0.08,
-    glow_factor=2.0,
-    color=CYAN
-)
-```
-
-### Object Converging Animation
-```python
-self.play(
-    stream_cloud.animate.move_to([5, 0, 0]),
-    run_time=2,
-    rate_func=smooth
-)
-```
-
----
-
-## Scene Flow Constants
-
-| Transition | Duration |
-|------------|----------|
-| Fade between scenes | 1 second |
-| Major camera movement | 3-6 seconds |
-| Text reveal | 1-1.5 seconds |
-| Object creation | 2-3 seconds |
-| SVG trace animation | 2-3 seconds |
-
-### Scene Order (Total Flow)
 Introduction → Hook → Pipeline → Challenges → Embedding Space → Softmax Introduction → Softmax Limitation → Evolution → ArcFace Core → Why It Works → Applications → Closing
 
 ---
 
-## Development Workflow
+## Quick Reference Checklist (before every commit)
 
-1. **Create SVG assets** for complex objects (laptop, phone, lock) in `scenes/decorations/`
-2. **Create scene file** in `scenes/` directory
-3. **Test locally** with `manimgl main.py SceneName -s`
-4. **Export video** with `manimgl main.py SceneName -w`
-5. **Add to scene list** in `main.py`
-6. **Commit changes** with descriptive message
-
----
-
-## Important Notes
-
-- **ALWAYS use SVG assets** for realistic objects (devices, icons) - never manually draw with primitives
-- **ALWAYS use `from manimlib import *`** at the top of scene files
-- Use `import numpy as np` for mathematical operations
-- Set random seeds (`np.random.seed(42)`) for reproducible point distributions
-- Reset camera before scene transitions
-- Prefer geometric intuition over text explanations
-- Keep line weights thin (1.5-2.5) for technical blueprint aesthetic
-- Use `Create()` or `Write()` instead of `ShowCreation()` for SVG elements
+- [ ] `from manimlib import *` at top of every scene file
+- [ ] `class MyScene(Scene)` — never `ThreeDScene` unless 3D is required
+- [ ] `self.camera.background_color = "#111111"`
+- [ ] All text via `Tex(r"...")` or `MathTex(r"...")` — NO `Text()`
+- [ ] Complex objects via `white_svg("filename.svg", height=X)` — NO primitives
+- [ ] Every SVGMobject has `.set_fill(WHITE, 1.0).set_stroke(WHITE, 1.5)`
+- [ ] Zero hardcoded coordinates — use `.arrange()`, `.next_to()`, `.to_edge()`
+- [ ] Animations use `ShowCreation` not `Create`
+- [ ] Raw strings `r"..."` for all LaTeX text inputs
+- [ ] `np.random.seed(42)` for reproducible point distributions
