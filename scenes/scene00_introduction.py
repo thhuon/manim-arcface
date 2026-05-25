@@ -1,222 +1,89 @@
 from manimlib import *
-import numpy as np
 
 
-class Scene00Introduction(ThreeDScene):
+def get_svg_path(filename: str) -> str:
+    """Get full path to SVG file in decorations folder."""
+    import os
+    return os.path.join(
+        os.path.dirname(__file__),
+        "decorations",
+        filename
+    )
+
+
+def white_svg(filename: str, height: float):
+    """Load SVG as crisp solid-white flat vector."""
+    return SVGMobject(
+        file_name=get_svg_path(filename),
+        height=height,
+    ).set_fill(WHITE, 1.0).set_stroke(WHITE, 1.5)
+
+
+class Scene00Introduction(Scene):
     """
-    Scene 0: Introduction
-    - Black screen then reveal vector diagram of laptop and locked phone
-    - Face bounding box around simplified vector face
-    - 3D: Face transforms into rotating wireframe mesh, vertices glow as vector points
-    - Vector points disperse into pixel/matrix streams converging to single math point
-    - Title: "Understanding ArcFace: The Geometry Behind Modern Face Recognition"
+    Sub-Screen 1: Device flow diagram — uniform scaling, no distortion.
+    Sub-Screen 2: LaTeX title fades in after diagram fades out.
     """
 
     def construct(self):
-        # Start with black screen
-        self.wait(0.5)
+        self.camera.background_color = "#111111"
 
-        # === Part 1: Phone and Laptop with Face Detection ===
-        self.camera.background_color = BLACK
-        phone = RoundedRectangle(
-            width=1.2,
-            height=2.4,
-            corner_radius=0.15,
-            stroke_color="#4fc3f7",
-            stroke_width=3,
-            fill_opacity=0
-        )
+        # ── STEP 1: Asset Loading & Proportional Scaling ──────────────────────
 
-        lock_icon = VGroup(
-            Square(0.4, stroke_color="#ff6b9d", stroke_width=2),
-            Arc(
-                start_angle=PI * 0.2,
-                angle=-PI * 0.4,
-                radius=0.15,
-                stroke_color="#ff6b9d",
-                stroke_width=2
-            ),
-        ).scale(0.6).move_to(phone.get_center() + UP * 0.2)
+        # LEFT: devices.svg — dominant element, scaled up uniformly
+        devices = white_svg("devices.svg", height=2.5)
+        devices.scale(1.8)
 
-        phone.add(lock_icon)
+        # Closed lock — scaled down, sits strictly above devices
+        lock_closed = white_svg("lock.svg", height=1.0)
+        lock_closed.scale(0.65)
+        lock_closed.next_to(devices, UP, buff=0.3)
 
-        laptop_screen = RoundedRectangle(
-            width=3,
-            height=2,
-            corner_radius=0.1,
-            stroke_color="#4fc3f7",
-            stroke_width=3,
-            fill_opacity=0
-        )
-        laptop_base = Rectangle(
-            width=3.5,
-            height=0.15,
-            stroke_color="#4fc3f7",
-            stroke_width=2,
-            fill_opacity=0
-        ).move_to(laptop_screen.get_bottom() + DOWN * 0.15)
+        left_group = VGroup(devices, lock_closed)
 
-        laptop = VGroup(laptop_screen, laptop_base)
+        # CENTER: extended arrow + "FaceID" LaTeX label above
+        center_arrow = Arrow(LEFT, RIGHT, stroke_color=WHITE, stroke_width=4)
+        center_arrow.scale(1.6)
 
-        phone.move_to(LEFT * 3)
-        laptop.move_to(RIGHT * 2.5)
+        face_id_label = Tex(r"\text{FaceID}", font_size=36, color=WHITE)
+        face_id_label.next_to(center_arrow, UP, buff=0.3)
 
-        face_box = SurroundingRectangle(
-            Rectangle(width=1.5, height=2),
-            stroke_color="#ffe66d",
-            stroke_width=2,
-            buff=0.1
-        )
+        center_group = VGroup(center_arrow, face_id_label)
 
-        simple_face = VGroup(
-            Circle(
-                radius=0.5,
-                stroke_color="#4ecdc4",
-                stroke_width=2,
-                fill_opacity=0
-            ),
-            Line(LEFT * 0.15, RIGHT * 0.15, stroke_color="#4ecdc4", stroke_width=2),
-            Arc(
-                start_angle=PI * 0.2,
-                angle=-PI * 0.4,
-                radius=0.15,
-                stroke_color="#4ecdc4",
-                stroke_width=2
-            ),
-        ).move_to(laptop_screen.get_center())
+        # RIGHT: open lock — matches closed lock scale exactly
+        lock_open = white_svg("lock-open.svg", height=1.0)
+        lock_open.scale(0.8)
+        right_group = lock_open
 
-        devices_group = VGroup(phone, laptop).arrange(RIGHT, buff=2)
+        # ── STEP 2: Horizontal Spacing & Maximizing Screen Coverage ───────────
 
-        self.play(FadeIn(devices_group, run_time=1.5))
-        self.wait(0.5)
+        main_diagram = VGroup(left_group, center_group, right_group)
+        main_diagram.arrange(RIGHT, buff=1.5)
+        main_diagram.scale(1.2)
+        main_diagram.move_to(ORIGIN)
 
-        face_box.move_to(laptop_screen.get_center())
-        self.play(ShowCreation(face_box, run_time=0.8))
-        self.wait(0.3)
+        # ── STEP 3: Title Block (Sub-Screen 2) ───────────────────────────────
 
-        self.play(FadeIn(simple_face, run_time=0.5))
-        self.wait(0.5)
+        line1 = Tex(r"\textbf{Understanding ArcFace}", font_size=72, color=WHITE)
+        line2 = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
+        title_block = VGroup(line1, line2)
+        title_block.arrange(DOWN, buff=0.4)
+        title_block.move_to(ORIGIN)
 
-        # === Part 2: Transform to 3D Wireframe ===
-        self.play(FadeOut(VGroup(devices_group, face_box, simple_face)))
+        # ── STEP 4: Animation Sequence ───────────────────────────────────────
 
-        # Create wireframe sphere
-        sphere = Sphere(radius=1.5, resolution=(12, 24))
-        sphere_mesh = SurfaceMesh(sphere, stroke_color="#4fc3f7", stroke_opacity=0.6)
-        sphere_mesh.set_stroke(width=1)
+        # Sub-Screen 1: reveal diagram left → center → right
+        self.play(ShowCreation(left_group),   run_time=1.2)
+        self.play(ShowCreation(center_group), run_time=1.0)
+        self.play(ShowCreation(right_group),  run_time=0.8)
+        self.wait(1.5)
 
-        # Create glowing dots on sphere
-        np.random.seed(42)
-        n_points = 30
-        points_on_sphere = []
+        # Transition: fade out diagram
+        self.play(FadeOut(main_diagram), run_time=0.8)
 
-        for _ in range(n_points):
-            theta = np.random.uniform(0, 2 * PI)
-            phi = np.random.uniform(0, PI)
-            x = 1.5 * np.sin(phi) * np.cos(theta)
-            y = 1.5 * np.cos(phi)
-            z = 1.5 * np.sin(phi) * np.sin(theta)
-            points_on_sphere.append([x, y, z])
+        # Sub-Screen 2: fade in LaTeX title (no shift — appears directly)
+        self.play(FadeIn(title_block), run_time=1.5)
+        self.wait(2.5)
 
-        # Create GlowDots with all points
-        point_cloud = GlowDots(
-            points=np.array(points_on_sphere),
-            radius=0.08,
-            glow_factor=2.0,
-            color="#4fc3f7"
-        )
-
-        # Set up camera for 3D
-        self.frame.reorient(phi_degrees=70, theta_degrees=-45)
-
-        self.play(FadeIn(sphere_mesh, run_time=1.5))
-        self.play(FadeIn(point_cloud, run_time=1))
-        self.wait(0.5)
-
-        # Rotate the sphere
-        self.play(Rotate(sphere_mesh, PI / 6, run_time=3))
-        self.play(Rotate(point_cloud, PI / 6, run_time=3))
-        self.wait(0.5)
-
-        # === Part 3: Vector Points Converging to Embedding Point ===
-        # Create embedding point as a simple glowing dot
-        embedding_dot = GlowDot(center=[5, 0, 0], radius=0.15, color=WHITE)
-
-        # Create stream points - subset of point_cloud
-        stream_points = np.array(points_on_sphere[:15])
-        stream_cloud = GlowDots(
-            points=stream_points,
-            radius=0.06,
-            glow_factor=2.0,
-            color="#4ecdc4"
-        )
-
-        # Move camera to see the convergence
-        self.play(self.frame.animate.reorient(phi_degrees=0, theta_degrees=0), run_time=1.5)
-        self.wait(0.3)
-
-        self.add(embedding_dot)
-        self.play(FadeIn(embedding_dot, run_time=0.8))
-        self.wait(0.3)
-
-        # Animate points converging
-        self.play(
-            stream_cloud.animate.move_to([5, 0, 0]),
-            run_time=2,
-            rate_func=smooth
-        )
-
-        self.play(
-            point_cloud.animate.move_to([5, 0, 0]),
-            run_time=2,
-            rate_func=smooth
-        )
-
-        # Final effect on embedding point
-        self.play(embedding_dot.animate.scale(1.5), run_time=0.3)
-        self.play(embedding_dot.animate.scale(1 / 1.5), run_time=0.3)
-        self.wait(0.5)
-
-        # Fade out 3D elements
-        self.remove(stream_cloud, point_cloud, embedding_dot, sphere_mesh)
-        self.wait(0.3)
-
-        # === Part 4: Title - 3B1B Style ===
-        # Set pure black background for 3B1B aesthetic
-        self.camera.background_color = BLACK
-        self.play(self.frame.animate.reorient(phi_degrees=0, theta_degrees=0), run_time=1)
-
-        # Load SVG accent decoration
-        accent_path = "scenes/decorations/3b1b_accent.svg"
-        accent = SVGMobject(accent_path)
-        accent.set_fill(WHITE, 1)
-        accent.scale(0.5)
-        accent.to_edge(UP, buff=2.5)
-
-        # Main title - white, large, using LaTeX (3B1B style)
-        title = Tex(
-            r"\text{Understanding ArcFace}",
-            font_size=72,
-            color=WHITE
-        )
-        # No backstroke - pure white text like 3B1B
-
-        # Subtitle - smaller, slightly dimmed
-        subtitle = Tex(
-            r"\text{The Geometry Behind Modern Face Recognition}",
-            font_size=32,
-            color="#cccccc"
-        )
-
-        # Add accent decoration above title
-        self.play(FadeIn(accent, run_time=0.8))
-        self.wait(0.2)
-
-        # Fade in title and subtitle
-        self.play(FadeIn(title, run_time=1.2, rate_func=smooth))
-        self.wait(0.3)
-        self.play(FadeIn(subtitle, run_time=1, rate_func=smooth))
-        self.wait(2)
-
-        self.play(FadeOut(VGroup(title, subtitle, accent)), run_time=1)
+        self.play(FadeOut(title_block), run_time=1.0)
         self.wait(0.5)
