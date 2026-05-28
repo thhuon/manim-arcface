@@ -11,7 +11,7 @@
 |------|-------|
 | **Framework** | ManimGL (3b1b version) |
 | **Style** | 3Blue1Brown — cinematic, geometric, intuition-first |
-| **Output** | `.mp4` via ffmpeg, 1920×1080 (1080p), 60fps |
+| **Output** | `.mp4` via ffmpeg, **3840×2160 (4K UHD)**, 60fps |
 | **Audience** | Undergrad CS students with basic ML knowledge |
 
 ---
@@ -170,6 +170,28 @@ run_time=4-6       # Camera/slow reveals
 
 ---
 
+## Rule 6: Group vs VGroup — CHOOSE THE RIGHT CONTAINER
+
+> `VGroup` in ManimGL only accepts `VMobject` subclasses. Mixing `ImageMobject` (raster) with `VMobject` (vector) in a container requires `Group`.
+
+```python
+# ✅ CORRECT — Group for mixed raster + vector
+face_img = ImageMobject("face_bg.png")          # raster
+mesh     = SVGMobject("mesh.svg")              # vector
+face_block = Group(face_img, mesh)             # OK: Group accepts both
+
+# ✅ CORRECT — VGroup for pure vector content only
+math_block = VGroup(label1, label2, arrow)     # OK: all VMobject
+
+# ❌ WRONG — VGroup rejects ImageMobject
+bad = VGroup(face_img, mesh)                  # raises: "Only VMobjects can be passed"
+
+# NOTE: Group does not have .arrange(). Keep inner blocks as Group,
+# then use .move_to() / .next_to() / .to_edge() on the outer Group.
+```
+
+---
+
 ## Background & Color Palette
 
 ```python
@@ -196,13 +218,19 @@ GOLD      = "#FFD700"
 ## Typography (LaTeX Only)
 
 ```python
-# Equations and titles — ALWAYS via Tex/MathTex
-main_title = Tex(r"\text{Understanding ArcFace}", font_size=72, color=WHITE)
-subtitle   = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
-equation   = MathTex(r"f(x) = \frac{1}{1 + e^{-x}}", font_size=48, color=WHITE)
+# Titles and labels — use Tex (manimgl's LaTeX class)
+main_title = Tex(r"\text{Understanding ArcFace}", font_size=72)
+subtitle   = Tex(r"\text{The Geometry of Face Recognition}", font_size=32)
+equation   = Tex(r"f(x) = \frac{1}{1 + e^{-x}}", font_size=48)
+
+# Set color AFTER creation (color kwarg not supported directly on Tex)
+subtitle.set_color("#cccccc")
 
 # ❌ Text() is FORBIDDEN for any visible text
 label = Text("embedding")   # NEVER
+
+# ❌ MathTex does not exist in manimgl — use Tex
+eq = MathTex(r"...")        # NEVER — use Tex instead
 ```
 
 ---
@@ -230,14 +258,42 @@ manim-arcface-2/
 ## Render Commands
 
 ```bash
-# Write to video file (medium quality 720p)
-python3 -m manimlib scenes/SceneFile.py SceneName -w -m
+# ─── HEADLESS RENDERING (no display/GPU required) ───────────────────────────
+# Always prefix with LIBGL_ALWAYS_SOFTWARE=1 for headless/server environments.
+# Without it, ManimGL will crash trying to open a GL window.
 
-# Preview (with window)
+# ─── QUALITY FLAGS (use --uhd for highest quality output) ───────────────────
+# --l      : 480p low quality  (fast iteration during development)
+# --m      : 720p medium       (preview / draft review)
+# --hd     : 1080p full HD     (standard quality)
+# --uhd    : 4K UHD 3840×2160 (FINAL output — highest quality)
+
+# ─── WRITE FLAG ──────────────────────────────────────────────────────────────
+# -w / --write_file : save rendered video to disk (REQUIRED for file output)
+# Without -w, ManimGL opens a preview window instead of writing a file.
+
+# ─── EXAMPLES ───────────────────────────────────────────────────────────────
+
+# Preview in window (dev only — requires display)
 python3 -m manimlib scenes/SceneFile.py SceneName
 
-# HD 1080p
-python3 -m manimlib scenes/SceneFile.py SceneName -w --hd
+# Low quality draft (480p) — fast iteration
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w -l scenes/SceneFile.py SceneName
+
+# Medium preview (720p) — draft review
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w -m scenes/SceneFile.py SceneName
+
+# HD 1080p — standard quality
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w --hd scenes/SceneFile.py SceneName
+
+# UHD 4K — FINAL output (3840×2160) ✓ REQUIRED for production
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w --uhd scenes/SceneFile.py SceneName
+
+# Write all scenes from a file
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w --uhd -a scenes/SceneFile.py
+
+# Open output file automatically after render
+LIBGL_ALWAYS_SOFTWARE=1 python3 -m manimlib -w --uhd -o scenes/SceneFile.py SceneName
 ```
 
 ---
@@ -253,10 +309,12 @@ Introduction → Hook → Pipeline → Challenges → Embedding Space → Softma
 - [ ] `from manimlib import *` at top of every scene file
 - [ ] `class MyScene(Scene)` — never `ThreeDScene` unless 3D is required
 - [ ] `self.camera.background_color = "#111111"`
-- [ ] All text via `Tex(r"...")` or `MathTex(r"...")` — NO `Text()`
-- [ ] Complex objects via `white_svg("filename.svg", height=X)` — NO primitives
-- [ ] Every SVGMobject has `.set_fill(WHITE, 1.0).set_stroke(WHITE, 1.5)`
-- [ ] Zero hardcoded coordinates — use `.arrange()`, `.next_to()`, `.to_edge()`
-- [ ] Animations use `ShowCreation` not `Create`
+- [ ] All text via `Tex(r"...")` — NO `Text()`; set color with `.set_color()` after creation
+- [ ] Complex objects via `SVGMobject` with `.set_fill(WHITE, 1.0).set_stroke(...)` — NO primitives
+- [ ] `ImageMobject` for raster assets; wrap in `Group()` (not `VGroup`) when mixing with `VMobject`
+- [ ] Zero hardcoded coordinates — use `.arrange()`, `.next_to()`, `.to_edge()`, `.to_corner()`
+- [ ] Animations use `ShowCreation` (NOT `Create`)
 - [ ] Raw strings `r"..."` for all LaTeX text inputs
-- [ ] `np.random.seed(42)` for reproducible point distributions
+- [ ] `random.seed(42)` for reproducible random content
+- [ ] Always **Render with `--uhd` flag for final output** (3840×2160)
+- [ ] Prefix all render commands with `LIBGL_ALWAYS_SOFTWARE=1` for headless environments
