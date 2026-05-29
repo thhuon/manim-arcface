@@ -3,20 +3,29 @@ import os
 import random
 
 
+# =============================================================================
+# COLOR PALETTE - Consistent throughout the scene for visual harmony
+# =============================================================================
+
 CYAN = "#00D4FF"
 BLUE = "#4A7DFF"
 WHITE = "#F2F6FF"
 MUTED = "#8A94A6"
 DARK = "#090D14"
 PANEL = "#101722"
-GREEN = "#3EF7A0"
+GREEN = "#3EF7A0" 
 
+
+# =============================================================================
+# UTILITY FUNCTIONS - Path resolution and SVG helpers
+# =============================================================================
 
 def asset_path(filename: str) -> str:
     return os.path.join(os.path.dirname(__file__), "decorations", filename)
 
 
 def safe_svg(filename: str, scale_factor: float = 1.0, stroke_color=WHITE):
+    """Load SVG with stroke-only style (no fill), returns None if file missing."""
     path = asset_path(filename)
     if not os.path.exists(path):
         return None
@@ -27,13 +36,19 @@ def safe_svg(filename: str, scale_factor: float = 1.0, stroke_color=WHITE):
     return obj
 
 
+# =============================================================================
+# HELPER FUNCTIONS - Basic building blocks for UI elements
+# =============================================================================
+
 def latex(text: str, size: int = 28, color=WHITE):
+    """Create a styled LaTeX text element with consistent coloring."""
     obj = Tex(text, font_size=size)
     obj.set_color(color)
     return obj
 
 
 def make_box(label_lines, width=2.35, height=1.28, stroke=CYAN, font_size=22):
+    """Create a rounded rectangle box with centered text labels inside."""
     box = RoundedRectangle(
         width=width,
         height=height,
@@ -50,12 +65,18 @@ def make_box(label_lines, width=2.35, height=1.28, stroke=CYAN, font_size=22):
 
 
 def glow_copy(mob, color=CYAN, width=7, opacity=0.18):
+    """Create a copy with soft glow effect (for highlight animations)."""
     g = mob.copy()
     g.set_stroke(color=color, width=width, opacity=opacity)
     return g
 
 
+# =============================================================================
+# VISUAL ELEMENT FACTORIES - Build reusable graphic components
+# =============================================================================
+
 def make_camera_icon():
+    """Construct a stylized camera icon from geometric shapes."""
     body = RoundedRectangle(width=1.18, height=0.78, corner_radius=0.12, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
     lens = Circle(radius=0.24, stroke_color=WHITE, stroke_width=2, fill_opacity=0)
     inner = Circle(radius=0.13, stroke_color=CYAN, stroke_width=1.5, fill_opacity=0)
@@ -69,6 +90,7 @@ def make_camera_icon():
 
 
 def make_abstract_face():
+    """Construct a minimalist face icon: circle + eyes + nose + mouth."""
     face = Circle(radius=0.68, stroke_color=WHITE, stroke_width=2, fill_opacity=0)
     eye_l = Dot(radius=0.055, color=CYAN).move_to(face.get_center() + 0.22 * LEFT + 0.16 * UP)
     eye_r = Dot(radius=0.055, color=CYAN).move_to(face.get_center() + 0.22 * RIGHT + 0.16 * UP)
@@ -82,6 +104,7 @@ def make_abstract_face():
 
 
 def make_landmarks():
+    """Create 5 facial landmark dots (eyes, nose tip, mouth corners)."""
     dots = VGroup()
     for p in [0.25 * LEFT + 0.20 * UP, 0.25 * RIGHT + 0.20 * UP, ORIGIN, 0.20 * LEFT + 0.28 * DOWN, 0.20 * RIGHT + 0.28 * DOWN]:
         dots.add(Dot(point=p, radius=0.045, color=CYAN))
@@ -89,6 +112,7 @@ def make_landmarks():
 
 
 def make_pixel_grid(size=2.15, n=8):
+    """Create an 8x8 grid overlay to represent pixelation concept."""
     grid = VGroup()
     step = size / n
     for i in range(n + 1):
@@ -99,6 +123,7 @@ def make_pixel_grid(size=2.15, n=8):
 
 
 def make_neural_network():
+    """Create a small neural network visualization: 3-5-5-3 architecture."""
     layers = [3, 5, 5, 3]
     groups = VGroup()
     for count in layers:
@@ -116,6 +141,7 @@ def make_neural_network():
 
 
 def make_vector(values, font_size=19):
+    """Create a column vector display with brackets around values."""
     entries = VGroup(*[latex(str(v), size=font_size) for v in values])
     entries.arrange(DOWN, buff=0.08)
     left = Line(entries.get_corner(UL) + 0.10 * LEFT, entries.get_corner(DL) + 0.10 * LEFT, stroke_color=WHITE, stroke_width=1.4)
@@ -123,8 +149,14 @@ def make_vector(values, font_size=19):
     return VGroup(left, entries, right)
 
 
+# =============================================================================
+# MAIN SCENE CLASS - Face Recognition Pipeline Animation
+# =============================================================================
+
 class Scene02_FaceRecognitionPipeline(Scene):
+
     def construct(self):
+        """Main animation sequence: intro -> 4 deep dives -> final overview."""
         self.camera.background_color = DARK
         self.frame = self.camera.frame
         self.pipeline = self.create_pipeline()
@@ -141,6 +173,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.final_overview()
 
     def create_pipeline(self):
+        """Build the 5-stage pipeline diagram: Input -> Detection -> Feature -> Matching -> Identity."""
         title = latex(r"\textbf{Face Recognition Pipeline}", size=38)
 
         stages = VGroup(
@@ -172,6 +205,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         return whole
 
     def play_intro_pipeline(self):
+        """Animate the pipeline diagram appearing: title, then stages one by one, then database."""
         self.frame.set_width(FRAME_WIDTH)
         self.play(FadeIn(self.pipeline.title), run_time=0.8)
         for i, stage in enumerate(self.pipeline.stages):
@@ -184,6 +218,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(0.7)
 
     def zoom_to_stage_then_black(self, index, title_lines):
+        """Zoom into a pipeline stage, fade to black, then show the stage title."""
         target = self.pipeline.stages[index]
         self.play(self.frame.animate.set_width(target.get_width() * 3.0).move_to(target), run_time=0.9)
         self.wait(0.15)
@@ -196,7 +231,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.play(FadeIn(stage_title), run_time=0.55)
         return stage_title
 
+    # -------------------------------------------------------------------------
+    # STAGE 1: Input Image - Camera captures raw pixels
+    # -------------------------------------------------------------------------
     def deep_dive_stage_1(self):
+        """Stage 1: Show camera icon capturing image, pixel grid overlay, raw pixel formula."""
         header = self.zoom_to_stage_then_black(0, [
             (r"\textbf{Stage 1}", 42, CYAN),
             (r"\text{Input Image}", 34, WHITE),
@@ -224,7 +263,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(1.2)
         self.play(FadeOut(VGroup(header, content)), run_time=0.65)
 
+    # -------------------------------------------------------------------------
+    # STAGE 2: Detection & Alignment - Locate, crop, normalize face pose
+    # -------------------------------------------------------------------------
     def deep_dive_stage_2(self):
+        """Stage 2: Show face detection flow - locate -> crop -> estimate -> normalize."""
         header = self.zoom_to_stage_then_black(1, [
             (r"\textbf{Stage 2}", 42, CYAN),
             (r"\text{Detection \& Alignment}", 34, WHITE),
@@ -279,7 +322,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(1.2)
         self.play(FadeOut(VGroup(header, content)), run_time=0.65)
 
+    # -------------------------------------------------------------------------
+    # STAGE 3: Feature Extraction - Neural network transforms to embedding
+    # -------------------------------------------------------------------------
     def deep_dive_stage_3(self):
+        """Stage 3: Show face -> neural network -> embedding vector transformation."""
         header = self.zoom_to_stage_then_black(2, [
             (r"\textbf{Stage 3}", 42, CYAN),
             (r"\text{Feature Extraction}", 34, WHITE),
@@ -318,7 +365,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(1.2)
         self.play(FadeOut(VGroup(header, content)), run_time=0.65)
 
+    # -------------------------------------------------------------------------
+    # STAGE 4: Matching / Verification - Compare embeddings with database
+    # -------------------------------------------------------------------------
     def deep_dive_stage_4(self):
+        """Stage 4: Show query embedding being compared to database with similarity scores."""
         header = self.zoom_to_stage_then_black(3, [
             (r"\textbf{Stage 4}", 42, CYAN),
             (r"\text{Matching / Verification}", 34, WHITE),
@@ -371,7 +422,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(1.2)
         self.play(FadeOut(VGroup(header, content)), run_time=0.65)
 
+    # -------------------------------------------------------------------------
+    # PIPELINE RESTORATION & OVERVIEW
+    # -------------------------------------------------------------------------
     def restore_pipeline(self, highlight_index=None):
+        """Recreate and show the pipeline diagram, optionally highlighting one stage."""
         self.frame.set_width(FRAME_WIDTH)
         self.frame.move_to(ORIGIN)
         self.pipeline = self.create_pipeline()
@@ -381,6 +436,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(0.35)
 
     def final_overview(self):
+        """Final sequence: pulse all stages, show closing message, fade out."""
         for i in range(4):
             self.pulse(self.pipeline.stages[i])
         self.pulse(self.pipeline.stages[-1], color=GREEN)
@@ -393,7 +449,11 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.wait(1.0)
         self.play(FadeOut(VGroup(self.pipeline, closing)), run_time=0.9)
 
+    # -------------------------------------------------------------------------
+    # ANIMATION HELPERS
+    # -------------------------------------------------------------------------
     def pulse(self, stage, color=CYAN):
+        """Create a highlight pulse effect on a stage box (for emphasis)."""
         outline = stage[0]
         halo = glow_copy(outline, color=color)
         self.add(halo, outline)
