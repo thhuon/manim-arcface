@@ -20,7 +20,7 @@ def get_asset_path(filename: str) -> str:
 
 class Scene01_HumanVsComputer(Scene):
     """
-    Beat 1 — Human recognition: static camera, trump_intuition → trump_aha,
+    Beat 1 — Human recognition: static camera, intuition → aha_moment,
               staggered reveal: arrow+aha+brain → (1s) → bulb+label.
     Beat 2 — Computer view: face_bg + mesh_overlay (matched bounds) → 8x8 matrix.
     Beat 3 — Pipeline title on a perfectly clean canvas.
@@ -33,14 +33,14 @@ class Scene01_HumanVsComputer(Scene):
         # BEAT 1 — Human recognition (static camera, no movement)
         # ─────────────────────────────────────────────────────────────────────
 
-        # trump_intuition.png — directly at final upper-left position
-        trump_intuition = ImageMobject(get_asset_path("trump_intuition.png"))
-        trump_intuition.scale(0.85)
-        trump_intuition.move_to(LEFT * 2.5 + UP * 1.2)
+        # intuition.png — directly at final upper-left position
+        intuition = ImageMobject(get_asset_path("intuition.png"))
+        intuition.scale(0.85)
+        intuition.move_to(LEFT * 2.5 + UP * 1.2)
 
-        # trump_aha.png — raster, matched height to trump_intuition (native colors)
-        trump_aha = ImageMobject(get_asset_path("trump_aha.png"))
-        trump_aha.set_height(trump_intuition.get_height())
+        # aha_moment.png — raster, matched height to intuition (native colors)
+        aha_moment = ImageMobject(get_asset_path("aha_moment.png"))
+        aha_moment.set_height(intuition.get_height())
 
         # Brain symbol — native SVG colors, larger scale
         brain = SVGMobject(file_name=get_asset_path("brain.svg"))
@@ -64,10 +64,10 @@ class Scene01_HumanVsComputer(Scene):
 
         # Bottom row: symbols + label — centered on screen
         bottom_row_group = Group(symbols_group, human_label)
-        bottom_row_group.next_to(trump_intuition, DOWN, buff=0.25)
+        bottom_row_group.next_to(intuition, DOWN, buff=0.25)
         bottom_row_group.move_to(bottom_row_group.get_center()[1] * UP)
 
-        # Arrow: data flow from trump_intuition (left) → trump_aha (right)
+        # Arrow: data flow from intuition (left) → aha_moment (right)
         row1_arrow = Arrow(
             LEFT,
             RIGHT,
@@ -75,8 +75,8 @@ class Scene01_HumanVsComputer(Scene):
             stroke_width=2,
         )
 
-        # Top row: trump_intuition + arrow + trump_aha
-        top_row_group = Group(trump_intuition, row1_arrow, trump_aha)
+        # Top row: intuition + arrow + aha_moment
+        top_row_group = Group(intuition, row1_arrow, aha_moment)
         top_row_group.arrange(RIGHT, buff=0.6)
         top_row_group.move_to(UP * 1.5)
 
@@ -106,19 +106,36 @@ class Scene01_HumanVsComputer(Scene):
 
         matrix_block = VGroup(*all_cells)
 
-        # computer_arrow — connects face_scan to matrix_block
+        # Brackets around the matrix
+        bracket_height = matrix_block.get_height() + 0.3
+        left_bracket = Line(UP * bracket_height / 2, DOWN * bracket_height / 2)
+        right_bracket = Line(UP * bracket_height / 2, DOWN * bracket_height / 2)
+
+        left_bracket.next_to(matrix_block, LEFT, buff=0.15)
+        right_bracket.next_to(matrix_block, RIGHT, buff=0.15)
+
+        left_bracket.set_stroke(color=WHITE, width=3)
+        right_bracket.set_stroke(color=WHITE, width=3)
+
+        # Group matrix with brackets
+        matrix_with_brackets = VGroup(left_bracket, matrix_block, right_bracket)
+        matrix_with_brackets.scale(1.75)
+
+        # computer_arrow —> connects face_scan to matrix_with_brackets
         computer_arrow = Arrow(
-            matrix_block.get_left() + LEFT * 0.3,
+            matrix_with_brackets.get_left() + LEFT * 0.3,
             face_scan.get_right() + RIGHT * 0.3,
             color=WHITE,
             stroke_width=3,
         )
 
-        # Beat 2 row: face + arrow + matrix — auto-arranged
-        beat2_row = Group(face_scan, computer_arrow, matrix_block)
+        # Beat 2 row: face + arrow + matrix —> auto-arranged
+        beat2_row = Group(face_scan, computer_arrow, matrix_with_brackets)
         beat2_row.arrange(RIGHT, buff=0.5)
         beat2_row.scale(0.8)
         beat2_row.move_to(ORIGIN)
+        beat2_row.move_to(np.array([0, beat2_row.get_center()[1], 0])) # make the beat2_row in the center of the frame
+        beat2_row.set_width(FRAME_WIDTH * 0.8) # make the beat2_row width is the width of the frame
 
         # Computer label below
         computer_label = Tex(
@@ -150,11 +167,11 @@ class Scene01_HumanVsComputer(Scene):
 
         # ══ BEAT 1 — Static camera, staggered reveal ════════════════════════
 
-        # Step 1: trump_intuition fades in at final position (no movement)
-        self.play(FadeIn(trump_intuition), run_time=1.0)
+        # Step 1: intuition fades in at final position (no movement)
+        self.play(FadeIn(intuition), run_time=1.0)
         self.wait(0.5)
 
-        # Step 2: simultaneously — arrow grows, trump_aha fades in, brain appears
+        # Step 2: simultaneously — arrow grows, aha_moment fades in, brain appears
         self.play(
             FadeIn(brain),
             run_time=1.0,
@@ -163,7 +180,7 @@ class Scene01_HumanVsComputer(Scene):
         # Step 3: exactly 1s later — bulb pops up above brain, label fades in
         self.play(
             FadeIn(row1_arrow),
-            FadeIn(trump_aha),
+            FadeIn(aha_moment),
             FadeIn(bulb),
             run_time=1.0,
         )
@@ -185,8 +202,10 @@ class Scene01_HumanVsComputer(Scene):
         self.play(FadeIn(face_scan), FadeIn(computer_arrow), run_time=0.8)
         self.wait(0.5)
 
-        # Step 2: matrix_block cells fade in, computer_arrow grows
+        # Step 2: brackets + matrix cells fade in
         self.play(
+            FadeIn(left_bracket),
+            FadeIn(right_bracket),
             LaggedStart(*[FadeIn(cell) for cell in all_cells], lag_ratio=0.055),
             run_time=2.5,
         )
