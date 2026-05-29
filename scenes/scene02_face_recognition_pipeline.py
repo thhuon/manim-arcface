@@ -1,3 +1,4 @@
+from typing import Any
 from manimlib import *
 import os
 import random
@@ -174,7 +175,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
 
     def create_pipeline(self):
         """Build the 5-stage pipeline diagram: Input -> Detection -> Feature -> Matching -> Identity."""
-        title = latex(r"\textbf{Face Recognition Pipeline}", size=38)
+        title = latex(r"\textbf{Face Recognition Pipeline}", size=45)
 
         stages = VGroup(
             make_box([r"\text{Input}", r"\text{Image / Video}"], width=2.25),
@@ -195,8 +196,9 @@ class Scene02_FaceRecognitionPipeline(Scene):
 
         diagram = VGroup(stages, arrows, db, db_arrow)
         whole = VGroup(title, diagram)
-        whole.arrange(DOWN, buff=0.55)
-        whole.to_edge(UP, buff=0.42)
+        # Title stays at top, diagram centered on screen
+        title.to_edge(UP, buff=0.42)
+        diagram.center()
         whole.stages = stages
         whole.arrows = arrows
         whole.database = db
@@ -206,7 +208,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
 
     def play_intro_pipeline(self):
         """Animate the pipeline diagram appearing: title, then stages one by one, then database."""
-        self.frame.set_width(FRAME_WIDTH)
+        self.frame.set_width(FRAME_WIDTH)  # Set the frame width to the full width of the screen
         self.play(FadeIn(self.pipeline.title), run_time=0.8)
         for i, stage in enumerate(self.pipeline.stages):
             self.play(FadeIn(stage), run_time=0.35)
@@ -237,31 +239,54 @@ class Scene02_FaceRecognitionPipeline(Scene):
     def deep_dive_stage_1(self):
         """Stage 1: Show camera icon capturing image, pixel grid overlay, raw pixel formula."""
         header = self.zoom_to_stage_then_black(0, [
-            (r"\textbf{Stage 1}", 42, CYAN),
-            (r"\text{Input Image}", 34, WHITE),
+            (r"\text{Stage 1}", 34, CYAN),
+            (r"\textbf{Input Image/Video}", 45, WHITE),
         ])
 
         camera = make_camera_icon()
-        face_frame = RoundedRectangle(width=2.20, height=2.20, corner_radius=0.18, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
-        face = make_abstract_face().scale(0.88).move_to(face_frame)
-        grid = make_pixel_grid(size=2.12).move_to(face_frame)
-        image_pack = VGroup(face_frame, face, grid)
+        camera.scale(1.5)
+        face_image = ImageMobject(asset_path("face_scan.png"), height=2.0)
+        face_image.scale(2.0)
 
-        arrow = Arrow(camera.get_right(), image_pack.get_left(), buff=0.24, color=CYAN, stroke_width=2)
+        upper_line = always_redraw(lambda: DashedLine(
+            camera.get_right(),
+            face_image.get_left() + UP * 0.85,
+            color=CYAN,
+            stroke_width=2,
+            dash_length=0.08
+        ))
+
+        lower_line = always_redraw(lambda: DashedLine(
+            camera.get_right(),
+            face_image.get_left() + DOWN * 0.85,
+            color=CYAN,
+            stroke_width=2,
+            dash_length=0.08
+        ))
+        # upper_line = DashedLine(camera.get_top(), face_image.get_top(), color=CYAN, stroke_width=2).rotate(30 * DEGREES) # up to 30 degrees
+        # lower_line = DashedLine(camera.get_bottom(), face_image.get_bottom(), color=CYAN, stroke_width=2).rotate(-30 * DEGREES) # down to 30 degrees
+
         formula = VGroup(
-            latex(r"\text{Raw pixels}", size=24, color=MUTED),
-            latex(r"\mathbf{I}\in\mathbb{R}^{H\times W\times 3}", size=27, color=WHITE),
-        ).arrange(DOWN, buff=0.15)
+            latex(r"\textbf{Raw pixels}", size=40, color=CYAN),  
+            latex(r"\mathbf{I}\in\mathbb{R}^{H\times W\times 3}", size=35, color=WHITE),
+        ).arrange(DOWN, buff=0.15).move_to(face_image.get_center() + DOWN * 0.5)
 
-        content = VGroup(camera, arrow, image_pack, formula)
+        content = Group(camera, upper_line, lower_line, face_image, formula)
         content.arrange(RIGHT, buff=0.55)
+
+        content.set_width(FRAME_WIDTH * 0.92) # make sure the content is within the frame
+
         content.next_to(header, DOWN, buff=0.70)
+        content.move_to(np.array([0, content.get_center()[1], 0]))
 
         self.play(FadeIn(camera), run_time=0.45)
-        self.play(GrowArrow(arrow), FadeIn(image_pack), run_time=0.65)
+        self.play(FadeIn(face_image), run_time=0.65)
+        self.play(GrowArrow(upper_line), GrowArrow(lower_line), run_time=0.65)
         self.play(FadeIn(formula), run_time=0.45)
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+        upper_line.clear_updaters()
+        lower_line.clear_updaters()
+        self.play(FadeOut(Group(header, content)), run_time=0.65)
 
     # -------------------------------------------------------------------------
     # STAGE 2: Detection & Alignment - Locate, crop, normalize face pose
@@ -269,58 +294,39 @@ class Scene02_FaceRecognitionPipeline(Scene):
     def deep_dive_stage_2(self):
         """Stage 2: Show face detection flow - locate -> crop -> estimate -> normalize."""
         header = self.zoom_to_stage_then_black(1, [
-            (r"\textbf{Stage 2}", 42, CYAN),
-            (r"\text{Detection \& Alignment}", 34, WHITE),
+            (r"\text{Stage 2}", 34, CYAN),
+            (r"\textbf{Detection \& Alignment}", 45, WHITE),
         ])
 
-        raw_frame = RoundedRectangle(width=1.78, height=2.05, corner_radius=0.12, stroke_color=MUTED, stroke_width=1.5, fill_opacity=0)
-        raw_face = make_abstract_face().scale(0.70).rotate(-12 * DEGREES).move_to(raw_frame)
-        bbox = RoundedRectangle(width=1.22, height=1.50, corner_radius=0.08, stroke_color=CYAN, stroke_width=2.2, fill_opacity=0).move_to(raw_frame)
-        landmarks = make_landmarks().scale(1.15).rotate(-12 * DEGREES).move_to(raw_frame)
-        crop = VGroup(bbox.copy(), raw_face.copy()).scale(0.92)
+        # Replace all face graphics with single image
+        face_img = ImageMobject(asset_path("detection_alignmemt_face.png"))
+        face_img.scale(0.9)
 
-        tilted = VGroup(
-            RoundedRectangle(width=1.60, height=1.82, corner_radius=0.12, stroke_color=CYAN, stroke_width=1.6, fill_opacity=0),
-            make_abstract_face().scale(0.62),
-            make_landmarks().scale(1.00),
-        )
-        tilted[1].move_to(tilted[0])
-        tilted[2].move_to(tilted[0])
-        tilted.rotate(-14 * DEGREES)
-
-        aligned = VGroup(
-            RoundedRectangle(width=1.60, height=1.82, corner_radius=0.12, stroke_color=CYAN, stroke_width=2.2, fill_opacity=0),
-            make_abstract_face().scale(0.62),
-            make_landmarks().scale(1.00),
-            DashedLine(UP * 0.95, DOWN * 0.95, color=BLUE, stroke_width=1.1),
-            DashedLine(LEFT * 0.85, RIGHT * 0.85, color=BLUE, stroke_width=1.1),
-        )
-        aligned[1].move_to(aligned[0])
-        aligned[2].move_to(aligned[0])
-        aligned[3].move_to(aligned[0])
-        aligned[4].move_to(aligned[0])
-
-        flow = VGroup(VGroup(raw_frame, raw_face, bbox, landmarks), crop, tilted, aligned)
+        flow = Group(face_img)
         flow.arrange(RIGHT, buff=0.52)
-        arrows = VGroup(*[Arrow(a.get_right(), b.get_left(), buff=0.15, color=CYAN, stroke_width=2) for a, b in zip(flow[:-1], flow[1:])])
-        labels = VGroup(
-            latex(r"\text{Locate face region}", size=19, color=MUTED),
-            latex(r"\text{Crop}", size=19, color=MUTED),
-            latex(r"\text{Estimate pose}", size=19, color=MUTED),
-            latex(r"\text{Normalize pose, scale, and position}", size=19, color=MUTED),
-        )
-        for item, lab in zip(flow, labels):
-            lab.next_to(item, DOWN, buff=0.20)
+        # center the flow in the frame
+        flow.move_to(np.array([0, flow.get_center()[1], 0]))
+        label_1 = VGroup(
+            latex(r"\text{Locate face region}", size=24, color=WHITE),
+            latex(r"\text{in the image}", size=24, color=WHITE),
+        ).arrange(DOWN, buff=0.05)
 
-        content = VGroup(flow, arrows, labels)
+        label_1.next_to(flow, DOWN, buff=0.20)
+        label_1.set_x(face_img.get_left()[0] + face_img.get_width() * 1/8)
+
+        label_2 = VGroup(
+            latex(r"\text{Normalize pose, scale,}", size=24, color=WHITE),
+            latex(r"\text{and position}", size=24, color=WHITE),
+        ).arrange(DOWN, buff=0.05)
+        label_2.next_to(flow, DOWN, buff=0.20)
+        label_2.set_x(face_img.get_left()[0] + face_img.get_width() * 7/8)
+
+        content = Group(flow, label_1, label_2)
         content.next_to(header, DOWN, buff=0.70)
 
-        self.play(FadeIn(flow[0][0]), FadeIn(flow[0][1]), run_time=0.45)
-        self.play(FadeIn(bbox), FadeIn(landmarks), FadeIn(labels[0]), run_time=0.55)
-        for i in range(3):
-            self.play(GrowArrow(arrows[i]), FadeIn(flow[i + 1]), FadeIn(labels[i + 1]), run_time=0.55)
+        self.play(FadeIn(face_img), FadeIn(label_1), FadeIn(label_2), run_time=0.65)
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+        self.play(FadeOut(Group(header, content)), run_time=0.65)
 
     # -------------------------------------------------------------------------
     # STAGE 3: Feature Extraction - Neural network transforms to embedding
@@ -328,99 +334,328 @@ class Scene02_FaceRecognitionPipeline(Scene):
     def deep_dive_stage_3(self):
         """Stage 3: Show face -> neural network -> embedding vector transformation."""
         header = self.zoom_to_stage_then_black(2, [
-            (r"\textbf{Stage 3}", 42, CYAN),
-            (r"\text{Feature Extraction}", 34, WHITE),
+            (r"\text{Stage 3}", 34, CYAN),
+            (r"\textbf{Feature Extraction}", 45, WHITE),
         ])
 
-        aligned = VGroup(
-            RoundedRectangle(width=1.55, height=1.78, corner_radius=0.12, stroke_color=WHITE, stroke_width=1.8, fill_opacity=0),
-            make_abstract_face().scale(0.58),
-        )
-        aligned[1].move_to(aligned[0])
-        net = make_neural_network()
-        vec = make_vector([0.12, -0.45, 0.83, r"\cdots", 0.23, -0.31], font_size=20)
-        x_eq = latex(r"\mathbf{x}=", size=28)
+        # Replace face graphic with aligned face image
+        aligned_img = ImageMobject(asset_path("feature_extraction.png"), height=2.2)
+        aligned_label = latex(r"\text{Aligned Face}", size=24, color=WHITE)
+        aligned = Group(aligned_img, aligned_label)
+        aligned.arrange(DOWN, buff=0.15)
+
+        # Larger neural network
+        net = make_neural_network().scale(1.5)
+        net_label = latex(r"\text{Neural Network}", size=24, color=WHITE)
+        net_group = Group(net, net_label)
+        net_group.arrange(DOWN, buff=0.15)
+
+        # Larger embedding vector
+        vec = make_vector([0.12, -0.45, 0.83, r"\cdots", 0.23, -0.31], font_size=24)
+        # make the vector longer
+        vec.move_to(vec.get_center() + RIGHT * 0.5)
+        x_eq = latex(r"\mathbf{x}=", size=24, color=WHITE)
         embedding = VGroup(x_eq, vec).arrange(RIGHT, buff=0.15)
+        embedding_label = latex(r"\text{Learned representation}", size=24, color=WHITE)
+        embedding_group = VGroup(embedding, embedding_label)
+        embedding_group.arrange(DOWN, buff=0.15)
 
-        feature_tiles = VGroup(*[
-            Square(side_length=0.28, stroke_color=MUTED, stroke_width=1.0, fill_color=WHITE, fill_opacity=0.05)
-            for _ in range(6)
-        ])
-        feature_tiles.arrange(RIGHT, buff=0.10)
-        tile_label = latex(r"\text{local patterns }\rightarrow\text{ learned representation}", size=20, color=MUTED)
-        lower = VGroup(feature_tiles, tile_label).arrange(DOWN, buff=0.16)
-
-        main = VGroup(aligned, net, embedding).arrange(RIGHT, buff=0.62)
+        main = Group(aligned, net_group, embedding_group).arrange(RIGHT, buff=1.2)
         arrows = VGroup(
-            Arrow(aligned.get_right(), net.get_left(), buff=0.18, color=CYAN, stroke_width=2),
-            Arrow(net.get_right(), embedding.get_left(), buff=0.18, color=CYAN, stroke_width=2),
+            Arrow(aligned.get_right(), net_group.get_left(), buff=0.25, color=CYAN, stroke_width=2.5),
+            Arrow(net_group.get_right(), embedding_group.get_left(), buff=0.25, color=CYAN, stroke_width=2.5),
         )
-        content = VGroup(main, arrows, lower).arrange(DOWN, buff=0.42)
-        content.next_to(header, DOWN, buff=0.70)
+
+        content = Group(main, arrows)
+        content.set_width(FRAME_WIDTH * 0.92) # make sure the content is within the frame
+        content.next_to(header, DOWN, buff=0.80)
 
         self.play(FadeIn(aligned), run_time=0.45)
-        self.play(GrowArrow(arrows[0]), FadeIn(net), run_time=0.65)
-        self.play(GrowArrow(arrows[1]), FadeIn(embedding), run_time=0.65)
-        self.play(FadeIn(lower), run_time=0.45)
+        self.play(GrowArrow(arrows[0]), FadeIn(net_group), run_time=0.65)
+        self.play(GrowArrow(arrows[1]), FadeIn(embedding_group), run_time=0.65)
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+        self.play(FadeOut(Group(header, content)), run_time=0.65)
 
     # -------------------------------------------------------------------------
     # STAGE 4: Matching / Verification - Compare embeddings with database
     # -------------------------------------------------------------------------
+    # def deep_dive_stage_4(self):
+    #     """Stage 4: Show query embedding being compared to database with similarity scores."""
+    #     header = self.zoom_to_stage_then_black(3, [
+    #         (r"\text{Stage 4}", 34, CYAN),
+    #         (r"\textbf{Matching / Verification}", 45, WHITE),
+    #     ])
+
+    #     # Scale up query vector
+    #     query_title = latex(r"\text{Query embedding}", size=24, color=MUTED)
+    #     query_vec = make_vector([0.12, -0.45, 0.83, r"\cdots", 0.23, -0.31, r"\cdots"], font_size=22)
+    #     query_vec.move_to(query_vec.get_center() + RIGHT * 0.5)
+    #     query = VGroup(query_title, query_vec).arrange(DOWN, buff=0.22)
+
+    #     # Scale up database rows
+    #     rows = VGroup()
+    #     scores = [0.32, 0.18, 0.97, 0.21]
+    #     for idx, score in enumerate(scores):
+    #         row_box = RoundedRectangle(width=3.5, height=0.55, corner_radius=0.08, stroke_color=WHITE, stroke_width=1.3, fill_opacity=0)
+    #         user = latex(rf"\text{{User {idx + 1:03d}}}", size=20, color=WHITE)
+    #         sim = latex(rf"{score:.2f}", size=20, color=GREEN if score == max(scores) else WHITE)
+    #         row_content = VGroup(user, sim).arrange(RIGHT, buff=1.3)
+    #         row_content.move_to(row_box)
+    #         row = VGroup(row_box, row_content)
+    #         if score == max(scores):
+    #             row[0].set_stroke(color=GREEN, width=2.5)
+    #         rows.add(row)
+    #     rows.arrange(DOWN, buff=0.18)
+    #     db_title = latex(r"\text{Database of enrolled users}", size=24, color=MUTED)
+    #     database = VGroup(db_title, rows).arrange(DOWN, buff=0.22)
+
+    #     # Add face image above Face ID
+    #     face_img = ImageMobject(asset_path("face_normal.png"))
+    #     face_img.scale(0.5)
+    #     identity_label = latex(r"\text{Face ID: User 003}", size=24, color=GREEN)
+    #     identity_box = RoundedRectangle(width=2.5, height=1.0, corner_radius=0.12, stroke_color=GREEN, stroke_width=2.5, fill_opacity=0)
+    #     identity_label.move_to(identity_box)
+    #     identity_card = VGroup(identity_box, identity_label)
+    #     identity = Group(face_img, identity_card)
+    #     # identity.next_to(face_img.get_center() + DOWN * 1.25)
+    #     identity.arrange(DOWN, buff=0.20)
+
+    #     # Main layout with scaled components
+    #     main = Group(query, database, identity).arrange(RIGHT, buff=1.0)
+    #     main.set_width(FRAME_WIDTH * 0.85) # make sure the content is within the frame
+
+    #     # Connection lines from query to database
+    #     lines = VGroup[DashedLine]()
+    #     target_rows = rows
+
+    #     for i, row in enumerate(target_rows):
+    #         color = GREEN if i == 2 else MUTED
+    #         opacity = 0.95 if i == 2 else 0.35
+
+    #         line = always_redraw(lambda row=row, i=i, color=color, opacity=opacity: DashedLine(
+    #             query_vec.get_right() + RIGHT * 0.08,
+    #             row.get_left() + LEFT * 0.08,
+    #             color=color,
+    #             stroke_width=2.0 if i == 2 else 1.2,
+    #             stroke_opacity=opacity,
+    #             dash_length=0.08
+    #         ))
+
+    #         lines.add(line)
+            
+    #     out_arrow = Arrow(database.get_right(), identity.get_left(), buff=0.2, color=GREEN, stroke_width=2.5)
+
+    #     # Arrow from query to database
+    #     query_db_arrow = Arrow(
+    #         query.get_right() + RIGHT * 0.1,
+    #         database.get_left() + LEFT * 0.1,
+    #         buff=0.0,
+    #         color=CYAN,
+    #         stroke_width=2,
+    #         max_tip_length_to_length_ratio=0.15
+    #     )
+
+
+    #     # Formula with box and arrow to explanation
+    #     formula = latex(r"\cos(\theta)=\frac{\mathbf{x}\cdot\mathbf{w}}{|\mathbf{x}||\mathbf{w}|}", size=28, color=WHITE)
+    #     formula_box = RoundedRectangle(width=3.8, height=0.65, corner_radius=0.1, stroke_color=CYAN, stroke_width=2, fill_color=PANEL, fill_opacity=0.3)
+    #     formula.move_to(formula_box)
+    #     formula_group = VGroup(formula_box, formula)
+
+    #     formula_exp = latex(r"\text{higher similarity = closer match}", size=22, color=CYAN)
+    #     formula_exp.next_to(formula_group, RIGHT, buff=0.4)
+
+    #     formula_arrow = Arrow(
+    #         formula_group.get_right(),
+    #         formula_exp.get_left(),
+    #         buff=0.05,
+    #         color=CYAN,
+    #         stroke_width=2,
+    #         max_tip_length_to_length_ratio=0.2
+    #     )
+
+    #     content = Group(main, lines, query_db_arrow, out_arrow, formula_group, formula_arrow, formula_exp)
+    #     content.arrange(DOWN, buff=0.40)
+    #     content.next_to(header, DOWN, buff=0.60)
+    #     content.move_to(np.array([0, content.get_center()[1], 0])) # center the content in the frame
+
+    #     self.play(FadeIn(query), run_time=0.45)
+    #     self.play(FadeIn(database), run_time=0.55)
+    #     self.play(GrowArrow(query_db_arrow), run_time=0.45)
+    #     self.play(LaggedStart(*[ShowCreation(line) for line in lines], lag_ratio=0.10), run_time=0.75)
+    #     self.play(GrowArrow(out_arrow), FadeIn(identity), run_time=0.55)
+    #     self.play(FadeIn(formula_group), run_time=0.45)
+    #     self.play(GrowArrow(formula_arrow), FadeIn(formula_exp), run_time=0.45)
+    #     self.wait(1.2)
+    #     lines.clear_updaters()    
+    #     self.play(FadeOut(Group(header, content)), run_time=0.65)
     def deep_dive_stage_4(self):
         """Stage 4: Show query embedding being compared to database with similarity scores."""
         header = self.zoom_to_stage_then_black(3, [
-            (r"\textbf{Stage 4}", 42, CYAN),
-            (r"\text{Matching / Verification}", 34, WHITE),
+            (r"\text{Stage 4}", 34, CYAN),
+            (r"\textbf{Matching / Verification}", 45, WHITE),
         ])
 
-        query_title = latex(r"\text{Query embedding}", size=20, color=MUTED)
-        query_vec = make_vector([0.12, -0.45, 0.83, r"\cdots", 0.23, -0.31], font_size=18)
-        query = VGroup(query_title, query_vec).arrange(DOWN, buff=0.18)
+        # Scale up query vector
+        query_title = latex(r"\text{Query embedding}", size=24, color=MUTED)
+        query_vec = make_vector([0.12, -0.45, 0.83, r"\cdots", 0.23, -0.31, r"\cdots"], font_size=22)
+        query_vec.move_to(query_vec.get_center() + RIGHT * 0.5)
+        query = VGroup(query_title, query_vec).arrange(DOWN, buff=0.22)
 
+        # Scale up database rows
         rows = VGroup()
         scores = [0.32, 0.18, 0.97, 0.21]
+
         for idx, score in enumerate(scores):
-            row_box = RoundedRectangle(width=2.95, height=0.45, corner_radius=0.07, stroke_color=MUTED, stroke_width=1.1, fill_opacity=0)
-            user = latex(rf"\text{{User {idx + 1:03d}}}", size=16, color=WHITE)
-            sim = latex(rf"{score:.2f}", size=16, color=GREEN if score == max(scores) else MUTED)
-            row_content = VGroup(user, sim).arrange(RIGHT, buff=1.05)
+            row_box = RoundedRectangle(
+                width=3.5,
+                height=0.55,
+                corner_radius=0.08,
+                stroke_color=WHITE,
+                stroke_width=1.3,
+                fill_opacity=0
+            )
+
+            user = latex(rf"\text{{User {idx + 1:03d}}}", size=20, color=WHITE)
+            sim = latex(rf"{score:.2f}", size=20, color=GREEN if score == max(scores) else WHITE)
+
+            row_content = VGroup(user, sim).arrange(RIGHT, buff=1.3)
             row_content.move_to(row_box)
+
             row = VGroup(row_box, row_content)
+
             if score == max(scores):
-                row[0].set_stroke(color=GREEN, width=2.0)
+                row[0].set_stroke(color=GREEN, width=2.5)
+
             rows.add(row)
-        rows.arrange(DOWN, buff=0.12)
-        db_title = latex(r"\text{Database of enrolled users}", size=19, color=MUTED)
-        database = VGroup(db_title, rows).arrange(DOWN, buff=0.18)
 
-        identity = VGroup(
-            RoundedRectangle(width=1.92, height=0.90, corner_radius=0.10, stroke_color=GREEN, stroke_width=2.0, fill_opacity=0),
-            latex(r"\text{Face ID: User 003}", size=20, color=GREEN),
+        rows.arrange(DOWN, buff=0.18)
+
+        db_title = latex(r"\text{Database of enrolled users}", size=24, color=MUTED)
+        database = VGroup(db_title, rows).arrange(DOWN, buff=0.22)
+
+        # Add face image above Face ID
+        face_img = ImageMobject(asset_path("face_normal.png"))
+        face_img.scale(0.5)
+
+        identity_label = latex(r"\text{Face ID: User 003}", size=24, color=GREEN)
+
+        identity_box = RoundedRectangle(
+            width=identity_label.get_width() + 0.45,
+            height=identity_label.get_height() + 0.25,
+            corner_radius=0.12,
+            stroke_color=GREEN,
+            stroke_width=2.5,
+            fill_opacity=0
         )
-        identity[1].move_to(identity[0])
 
-        main = VGroup(query, database, identity).arrange(RIGHT, buff=0.52)
+        identity_label.move_to(identity_box)
+
+        identity_card = VGroup(identity_box, identity_label)
+        identity = Group(face_img, identity_card)
+
+        # identity_card nằm bên dưới face_img
+        identity.arrange(DOWN, buff=0.20)
+
+        # Main layout with scaled components
+        main = Group(query, database, identity).arrange(RIGHT, buff=1.0)
+        main.set_width(FRAME_WIDTH * 0.85)  # make sure the content is within the frame
+
+        # Formula with box and arrow to explanation
+        formula = latex(
+            r"\cos(\theta)=\frac{\mathbf{x}\cdot\mathbf{w}}{|\mathbf{x}||\mathbf{w}|}",
+            size=26,
+            color=WHITE
+        )
+
+        formula_box = RoundedRectangle(
+            width=3.8,
+            height=0.65,
+            corner_radius=0.1,
+            stroke_color=CYAN,
+            stroke_width=2,
+            fill_color=PANEL,
+            fill_opacity=0.3
+        )
+
+        formula.move_to(formula_box)
+        formula_group = VGroup(formula_box, formula)
+
+        formula_exp = latex(
+            r"\text{higher similarity = closer match}",
+            size=20,
+            color=CYAN
+        )
+
+        formula_row = Group(formula_group, formula_exp).arrange(RIGHT, buff=0.65)
+        formula_row.scale(1.25)
+        formula_row.next_to(main, DOWN, buff=0.5)
+        formula_row.align_to(main, LEFT)
+        formula_row.move_to(np.array([0, formula_row.get_center()[1], 0]))   # make the formular in the center of the frame
+
+        content = Group(main, formula_row)
+        content.next_to(header, DOWN, buff=0.35)
+        content.move_to(np.array([0, content.get_center()[1], 0]))  # center the content in the frame
+
+        # Connection lines from query to database
         lines = VGroup()
-        for i, row in enumerate(rows):
+        target_rows = rows
+
+        for i, row in enumerate(target_rows):
             color = GREEN if i == 2 else MUTED
             opacity = 0.95 if i == 2 else 0.35
-            lines.add(DashedLine(query_vec.get_right(), row.get_left(), color=color, stroke_width=1.7 if i == 2 else 1.0, stroke_opacity=opacity))
-        out_arrow = Arrow(database.get_right(), identity.get_left(), buff=0.16, color=GREEN, stroke_width=2.0)
-        formula = latex(r"\cos(\theta)=\frac{\mathbf{x}\cdot\mathbf{w}}{|\mathbf{x}||\mathbf{w}|}", size=24, color=MUTED)
-        formula.next_to(main, DOWN, buff=0.42)
 
-        content = VGroup(main, lines, out_arrow, formula)
-        content.next_to(header, DOWN, buff=0.70)
+            line = DashedLine(
+                query_vec.get_right() + RIGHT * 0.08,
+                row.get_left() + LEFT * 0.08,
+                color=color,
+                stroke_width=2.0 if i == 2 else 1.2,
+                stroke_opacity=opacity,
+                dash_length=0.08
+            )
+
+            lines.add(line)
+  
+        # Arrow from database to identity
+        out_arrow = Arrow(
+            rows[2].get_right() + RIGHT * 0.12,
+            identity.get_left() + LEFT * 0.12,
+            buff=0.0,
+            color=GREEN,
+            stroke_width=2.5,
+            max_tip_length_to_length_ratio=0.15
+        )
+
+        # Arrow from formula to formula_exp
+        formula_arrow = Arrow(
+            formula_group.get_right(),
+            formula_exp.get_left(),
+            buff=0.05,
+            color=CYAN,
+            stroke_width=2,
+            max_tip_length_to_length_ratio=0.2
+        )
 
         self.play(FadeIn(query), run_time=0.45)
         self.play(FadeIn(database), run_time=0.55)
-        self.play(LaggedStart(*[ShowCreation(line) for line in lines], lag_ratio=0.10), run_time=0.75)
-        self.play(GrowArrow(out_arrow), FadeIn(identity), run_time=0.55)
-        self.play(FadeIn(formula), run_time=0.45)
+
+        self.play(
+            LaggedStart(*[ShowCreation(line) for line in lines], lag_ratio=0.10),
+            run_time=0.75
+        )
+        self.play(GrowArrow(out_arrow), run_time=0.45)
+        self.wait(0.25)
+        self.play(FadeIn(identity), run_time=0.45)
+
+        self.play(FadeIn(formula_group), run_time=0.45)
+        self.play(GrowArrow(formula_arrow), FadeIn(formula_exp), run_time=0.45)
+
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+
+        self.play(
+            FadeOut(Group(header, content, lines, formula_arrow, out_arrow)),
+            run_time=0.65
+        )
 
     # -------------------------------------------------------------------------
     # PIPELINE RESTORATION & OVERVIEW
@@ -444,7 +679,10 @@ class Scene02_FaceRecognitionPipeline(Scene):
             latex(r"\text{A journey from pixels to identity.}", size=28, color=CYAN),
             latex(r"\text{This is the foundation of ArcFace.}", size=24, color=WHITE),
         ).arrange(DOWN, buff=0.18)
+
+        closing.scale(1.5)
         closing.next_to(self.pipeline, DOWN, buff=0.40)
+        closing.move_to(np.array([0, closing.get_center()[1], 0])) # make the closing message in the center of the frame
         self.play(FadeIn(closing), run_time=0.65)
         self.wait(1.0)
         self.play(FadeOut(VGroup(self.pipeline, closing)), run_time=0.9)
