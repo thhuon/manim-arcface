@@ -133,9 +133,9 @@ class Scene03_Challenges(Scene):
             if os.path.exists(path):
                 available_faces.append(f)
 
-        # Grid layout: 8 rows x 6 columns (48 images)
+        # Grid layout: 6 rows x 8 columns (48 images)
         # 408x408 pixels each - fit to frame with no gaps
-        rows, cols = 8, 6
+        rows, cols = 6, 8
 
         # Calculate img size to fill frame (no gaps)
         # FRAME_WIDTH ≈ 14.22, FRAME_HEIGHT ≈ 8.0
@@ -171,19 +171,23 @@ class Scene03_Challenges(Scene):
 
         # Store grid for next part
         self.face_grid = Group(*face_images)
+        self.face_grid.scale(0.85) 
+        self.wait(0.5)
+        self.face_grid.move_to(ORIGIN)
+        
 
         # Fade all the faces to low opacity
-        other_faces = Group(*[self.face_grid[i] for i in range(2, len(self.face_grid))])
+        other_faces = Group(*[self.face_grid[i] for i in range(0, len(self.face_grid))])
         self.play(other_faces.animate.set_opacity(0.1), run_time=0.3)
         self.wait(0.3)
 
         # Question text ABOVE grid (grid now fills most of screen) and centered
-        question = latex(r"\textbf{They are the same person?}", size=48)
+        question = latex(r"\textbf{They are the same person?}", size=55)
         question.center()
         self.add(question)
         self.play(Write(question), run_time=0.4)
 
-        # Human ability text with cyan glow
+        # Human ability text 
         ability = latex(r"\textbf{Humans are able to recognize this instantly.}", size=26, color=CYAN)
         ability.next_to(question, DOWN, buff=0.4)
 
@@ -206,79 +210,120 @@ class Scene03_Challenges(Scene):
         # PART 2: RAW PIXELS AND MISLEADING DISTANCE
         # =====================================================================
 
-        # Get face images A and B from the grid (face_1 and face_5)
-        face_a = get_face_image("face_1.png", height=1.8)
-        face_b = get_face_image("face_5.png", height=1.8)
-
-        # Labels under A and B
-        label_a = Tex(r"\text{A: same identity}", font_size=22, color=CYAN)
-        label_b = Tex(r"\text{B: same identity, different conditions}", font_size=22, color=CYAN)
-
-        # Create card groups (face + label) using Group instead of VGroup
-        card_a = Group(face_a, label_a)
-        card_b = Group(face_b, label_b)
-
-        # Position cards at center of screen
-        card_a.move_to(LEFT * 1.5)
-        card_b.move_to(RIGHT * 1.5)
-        label_a.next_to(face_a, DOWN, buff=0.3)
-        label_b.next_to(face_b, DOWN, buff=0.3)
-
-        # Add A and B with fade-in animation
-        self.add(card_a, card_b)
-        self.play(FadeIn(card_a), FadeIn(card_b), run_time=0.5)
-
-        self.wait(0.5)
-
-        # Fade out the entire face grid
+        # STEP 0: Clear the face grid
+        # Fade out the face grid to make room for the new comparison cards
         self.play(FadeOut(self.face_grid), run_time=0.5)
         self.wait(0.3)
 
-        # Move A and B cards to the left side, making space for C on the right
-        target_a_pos = LEFT * 3.5 + DOWN * 0.3
-        target_b_pos = LEFT * 0.5 + DOWN * 0.3
+        # Part 2 title
+        part_2_title = Tex(r"\textbf{A Subtle Problem}", color=CYAN, font_size=30)
+        part_2_subtitle = Tex(r"\text{Which faces should be considered close?}", color=WHITE, font_size=40)
+        part_2_title.move_to(UP * 3.8)
+        part_2_subtitle.next_to(part_2_title, DOWN, buff=0.15)
+        self.add(part_2_title, part_2_subtitle)
+        self.play(Write(part_2_title), Write(part_2_subtitle), run_time=0.5)
+        self.wait(0.5)
+
+
+        # STEP 1: Create and position face cards A and B (LARGE, CENTER)
+        # Get face images A and B - initially at LARGE size (height=2.5)
+        face_a = get_face_image("face_A.png", height=2.5)
+        face_a.scale(2.0)
+        face_b = get_face_image("face_B.png", height=2.5)
+        face_b.scale(2.0)
+
+        # Create labels under A and B
+        label_a = Tex(r"\text{A: same identity}", font_size=30, color=WHITE)
+        label_b = Tex(r"\text{B: same identity, different conditions}", font_size=30, color=WHITE)
+
+        # Create card groups (face + label) to move them together
+        card_a = Group(face_a, label_a)
+        card_b = Group(face_b, label_b)
+
+        # Position labels below faces
+        label_a.next_to(face_a, DOWN, buff=0.5)
+        label_b.next_to(face_b, DOWN, buff=0.5)
+
+        # Initially position A and B at CENTER, close to each other
+        # A at LEFT*1.5, B at RIGHT*1.5 (they overlap slightly in the middle)
+        card_a.move_to(LEFT * 3.0)
+        card_b.move_to(RIGHT * 1.5)
+
+        # Add cards to scene and fade in (they appear large at center)
+        self.add(card_a, card_b)
+        self.play(FadeIn(card_a), FadeIn(card_b), run_time=0.6)
+
+        self.wait(0.4)
+
+        # STEP 2: Shrink and move A, B to the LEFT
+        # Effect: "Extract" A and B from center, shrink them, and move left
+        # This creates space on the right side for face C to appear
+        #
+        # Movement:
+        #   A: (LEFT*1.5) → (LEFT*3.5 + UP*0.5)  [moves left and up slightly]
+        #   B: (RIGHT*1.5) → (ORIGIN + UP*0.5)    [moves to center-left and up]
+        #
+        # Size: scale down to 70% (0.7) of original
+        target_a_pos = LEFT * 3.5 + UP * 0.5
+        target_b_pos = ORIGIN + UP * 0.5
 
         self.play(
-            card_a.animate.move_to(target_a_pos),
-            card_b.animate.move_to(target_b_pos),
-            run_time=0.6
+            card_a.animate.scale(0.7).move_to(target_a_pos),
+            card_b.animate.scale(0.7).move_to(target_b_pos),
+            run_time=0.8
         )
 
-        # Now show C (different person, similar conditions to A)
-        face_c = get_face_image("face_2.png", height=1.8)
-        label_c = Tex(r"\text{C: same conditions, different identity}", font_size=22, color="#CC8855")
-        card_c = Group(face_c, label_c)
-        card_c.move_to(RIGHT * 3.5 + DOWN * 0.3)
-        label_c.next_to(face_c, DOWN, buff=0.3)
+        self.wait(0.3)
 
+        # STEP 3: Show face C on the RIGHT
+        # C appears at RIGHT side, same size as A and B after shrinking 
+        # C represents a DIFFERENT person with SAME conditions as A
+        face_c = get_face_image("face_C.png", height=2.5)
+        face_c.scale(1.4)  # Same size of A and B after shrinking
+
+        label_c = Tex(
+            r"\begin{array}{l}"
+            r"\text{C: same conditions,}\\"
+            r"\text{different identity}"
+            r"\end{array}",
+            font_size=27,
+            color=WHITE
+        )
+
+        card_c = Group(face_c, label_c)
+        card_c.move_to(RIGHT * 3.5 + UP * 0.5)  # 
+        label_c.next_to(face_c, DOWN, buff=0.5)
+
+        # Fade in C with a simple animation
         self.add(card_c)
         self.play(FadeIn(card_c), run_time=0.5)
 
         self.wait(0.5)
 
-        # =====================================================================
-        # STEP 2: CONVERT IMAGES INTO RAW PIXEL VECTORS
-        # =====================================================================
+        # Fade out part 2 title and subtitle
+        self.play(FadeOut(part_2_title), FadeOut(part_2_subtitle), run_time=0.3)
+        self.wait(0.3)
 
-        # Create simplified illustrative pixel vectors
+        # STEP 4: Show pixel vectors below each face
+        # Create simplified illustrative pixel vectors to show raw pixel representation
         p_a = Tex(r"\mathbf{p}_A = [23,\ 41,\ 88,\ \cdots]", font_size=24)
         p_b = Tex(r"\mathbf{p}_B = [4,\ 12,\ 35,\ \cdots]", font_size=24)
         p_c = Tex(r"\mathbf{p}_C = [25,\ 39,\ 84,\ \cdots]", font_size=24)
 
         # Position vectors below each card
-        p_a.next_to(card_a, DOWN, buff=0.5)
-        p_b.next_to(card_b, DOWN, buff=0.5)
-        p_c.next_to(card_c, DOWN, buff=0.5)
+        p_a.next_to(card_a, DOWN, buff=0.8)
+        p_b.next_to(card_b, DOWN, buff=0.8)
+        p_c.next_to(card_c, DOWN, buff=0.8)
 
-        # Show the notation label
+        # Show the notation label explaining the vector representation
         notation_label = Tex(r"\mathbf{p}=\operatorname{flatten}(\mathbf{I})", font_size=20, color=MUTED)
-        notation_label.move_to(DOWN * 2.8)
+        notation_label.move_to(DOWN * 2.2)
         self.add(notation_label)
 
         dim_label = Tex(r"\mathbf{p}\in\mathbb{R}^{H\times W\times 3}", font_size=18, color=MUTED)
-        dim_label.next_to(notation_label, DOWN, buff=0.15)
+        dim_label.next_to(notation_label, DOWN, buff=0.1)
 
-        # Animate: cards shift up slightly while vectors appear
+        # Animate: cards shift up slightly while pixel vectors and labels appear
         self.play(
             card_a.animate.shift(UP * 0.15).set_opacity(0.85),
             card_b.animate.shift(UP * 0.15).set_opacity(0.85),
@@ -289,18 +334,15 @@ class Scene03_Challenges(Scene):
             run_time=0.6
         )
 
-        # Add visual emphasis showing A and C are numerically closer
+        # Add note showing that A and C have similar first pixel values
         closer_note = Tex(r"\text{(first entries of } \mathbf{p}_A \text{ and } \mathbf{p}_C \text{ are similar)}", font_size=16, color=MUTED)
         closer_note.move_to(DOWN * 3.8)
         self.add(closer_note)
         self.play(Write(closer_note), run_time=0.4)
         self.wait(0.6)
 
-        # =====================================================================
-        # STEP 3: MOVE TO CONCEPTUAL PIXEL SPACE
-        # =====================================================================
-
-        # Fade image cards and vectors slightly
+        # STEP 5: Create 2D coordinate plane (raw-pixel space)
+        # Fade cards and vectors to 30% opacity as background for the plane
         self.play(
             card_a.animate.set_opacity(0.3),
             card_b.animate.set_opacity(0.3),
@@ -314,50 +356,52 @@ class Scene03_Challenges(Scene):
             run_time=0.5
         )
 
-        # Create 2D coordinate plane
+        # Create 2D coordinate plane title
         plane_title = Tex(r"\text{2D projection of raw-pixel space}", font_size=28)
-        plane_title.move_to(UP * 3.5)
+        plane_title.move_to(UP * 3.8)
         self.add(plane_title)
 
         plane_subtitle = Tex(r"\text{conceptual view}", font_size=18, color=MUTED)
         plane_subtitle.next_to(plane_title, DOWN, buff=0.15)
         self.add(plane_subtitle)
 
-        # Draw axes with generic labels
+        # Draw axes with generic pixel dimension labels
         axis_length = 3.5
         h_line = Line(LEFT * axis_length, RIGHT * axis_length, stroke_color=WHITE, stroke_width=1.5)
         v_line = Line(DOWN * axis_length, UP * axis_length, stroke_color=WHITE, stroke_width=1.5)
         h_line.move_to(ORIGIN)
         v_line.move_to(ORIGIN)
 
-        # Generic axis labels (pixel dimensions, not identity/pose/lighting)
+        # Axis labels (pixel dimensions, not identity/pose/lighting)
         axis_label_i = Tex(r"p_i", font_size=20)
         axis_label_i.next_to(h_line, RIGHT, buff=0.2)
         axis_label_j = Tex(r"p_j", font_size=20)
         axis_label_j.next_to(v_line, UP, buff=0.2)
 
+        # Group and display the plane
         plane_group = VGroup(h_line, v_line, axis_label_i, axis_label_j, plane_title, plane_subtitle)
         self.add(plane_group)
         self.play(Write(plane_group), run_time=0.5)
 
-        # =====================================================================
-        # STEP 4: REPRESENT THREE IMAGES AS POINTS
-        # =====================================================================
-
+        # STEP 6: Transform face cards into points on the 2D plane
         # Define positions on the 2D plane:
-        # A and B far apart (same identity, different appearance)
-        # A and C closer (different identity, similar conditions)
-        # Points are positioned relative to where the images were
-        point_a_pos = LEFT * 2.5 + UP * 0.5
-        point_b_pos = LEFT * 0.5 + DOWN * 1.2
-        point_c_pos = RIGHT * 1.0 + UP * 0.3  # Closer to A than B is
+        #   A and B: far apart (same identity, different appearance)
+        #   A and C: closer (different identity, similar conditions)
+        #
+        # Final layout:
+        #       C (1.2, 0.2)
+        #   A (-2.0, 0.3)
+        #           B (-0.3, -1.5)
+        point_a_pos = LEFT * 2.0 + UP * 0.3
+        point_b_pos = LEFT * 0.3 + DOWN * 1.5
+        point_c_pos = RIGHT * 1.2 + UP * 0.2
 
-        # Create points from the face images (shrink animation)
+        # Create colored dots to represent each face
         dot_a = Dot(point_a_pos, color=CYAN, radius=0.12)
         dot_b = Dot(point_b_pos, color=CYAN, radius=0.12)
         dot_c = Dot(point_c_pos, color="#CC8855", radius=0.12)
 
-        # Labels for points
+        # Labels for each point
         point_label_a = Tex(r"A", font_size=22)
         point_label_b = Tex(r"B", font_size=22)
         point_label_c = Tex(r"C", font_size=22)
@@ -365,7 +409,8 @@ class Scene03_Challenges(Scene):
         point_label_b.next_to(dot_b, DOWN + RIGHT, buff=0.1)
         point_label_c.next_to(dot_c, UP + RIGHT, buff=0.1)
 
-        # Shrink cards into points on the plane
+        # Shrink cards down to tiny dots and move them to point positions
+        # This creates a visual effect of faces "collapsing" into points
         self.play(
             card_a.animate.scale(0.06).move_to(point_a_pos),
             card_b.animate.scale(0.06).move_to(point_b_pos),
@@ -373,20 +418,24 @@ class Scene03_Challenges(Scene):
             run_time=0.7
         )
 
-        # Show the points
+        # Fade in the dots at the point positions
         self.play(
             FadeIn(dot_a), FadeIn(dot_b), FadeIn(dot_c),
             Write(point_label_a), Write(point_label_b), Write(point_label_c),
             run_time=0.4
         )
 
-        # Draw dashed lines to represent distances
+        # STEP 7: Draw dashed lines showing distances between points
+        # Draw dashed line between A and B (large distance - same identity)
         line_ab = DashedLine(point_a_pos, point_b_pos, stroke_color=WHITE, stroke_width=1.5)
+
+        # Draw dashed line between A and C (small distance - different identity)
         line_ac = DashedLine(point_a_pos, point_c_pos, stroke_color=WHITE, stroke_width=1.5)
 
+        # Animate the lines appearing
         self.play(Write(line_ab), Write(line_ac), run_time=0.4)
 
-        # Add distance labels
+        # Add distance labels explaining the distances
         dist_ab_label = Tex(r"\text{same identity, large pixel distance}", font_size=18, color=CYAN)
         dist_ab_label.move_to((point_a_pos + point_b_pos) / 2 + DOWN * 0.4)
         dist_ab_label.shift(RIGHT * 0.5)
@@ -397,10 +446,8 @@ class Scene03_Challenges(Scene):
         self.play(Write(dist_ab_label), Write(dist_ac_label), run_time=0.4)
         self.wait(0.5)
 
-        # =====================================================================
-        # KEY CONCLUSION: Raw-pixel distance can be misleading
-        # =====================================================================
-
+        # STEP 8: Display the key conclusion
+        # Show the main takeaway: raw pixel distance can be misleading
         conclusion1 = Tex(r"\textbf{Raw-pixel distance can be misleading.}", font_size=32)
         conclusion1.center()
         conclusion1.move_to(DOWN * 3.8)
@@ -408,7 +455,7 @@ class Scene03_Challenges(Scene):
         self.play(Write(conclusion1), run_time=0.5)
         self.wait(0.8)
 
-        # Transform to stronger statement
+        # Transform to a stronger statement
         conclusion1.generate_target()
         conclusion1.target.become(
             Tex(r"\textbf{Raw pixels do not preserve identity distance.}", font_size=32)
@@ -418,16 +465,19 @@ class Scene03_Challenges(Scene):
         self.play(Transform(conclusion1, conclusion1.target), run_time=0.5)
         self.wait(0.8)
 
-        # Store for Part 3
+        # STEP 9: Store elements for Part 3
+        # Store all part 2 elements for use in Part 3 (identity-aware representation)
         self.points_ab = VGroup(dot_a, dot_b, dot_c, line_ab, line_ac, point_label_a, point_label_b, point_label_c)
         self.dist_labels = VGroup(dist_ab_label, dist_ac_label)
         self.conclusion1 = conclusion1
         self.plane_group = plane_group
+
         # Store all part 2 elements including card groups
         self.all_part2_elements = [
             card_a, card_b, card_c,
             p_a, p_b, p_c, notation_label, dim_label, closer_note
         ]
+
         # Store individual references for Part 3 animation
         self.dot_a = dot_a
         self.dot_b = dot_b
@@ -442,28 +492,23 @@ class Scene03_Challenges(Scene):
 
     def beat_0_part_3_central_question(self):
         """
-        Keep points A, B, C visible, create identity-aware representation space,
-        animate the desired behavior (A and B close, C far), then show scene title.
+        Transition from raw-pixel space to identity-aware representation.
+        Shows that we need a new space where identity (not appearance) defines distance.
         """
-        # =====================================================================
-        # PART 3: LINK TO THE NEXT CHAPTER
-        # =====================================================================
-
-        # Keep points visible for a moment
-        self.wait(0.5)
-
-        # Create second empty space on the right labeled "Identity-aware representation"
+        # STEP 1: Create identity-aware representation space (on the RIGHT)
+        # Create second space labeled "Identity-aware representation"
+        # This represents what we WANT: a space where identity distance is preserved
         new_space_title = Tex(r"\text{Identity-aware representation}", font_size=26)
         new_space_title.move_to(RIGHT * 4.5 + UP * 3.2)
 
-        # Draw the new space with axes
+        # Draw axes for the new space
         new_axis_length = 2.5
         new_h_line = Line(LEFT * new_axis_length, RIGHT * new_axis_length, stroke_color=WHITE, stroke_width=1.5)
         new_v_line = Line(DOWN * new_axis_length, UP * new_axis_length, stroke_color=WHITE, stroke_width=1.5)
         new_h_line.move_to(RIGHT * 4.5)
         new_v_line.move_to(RIGHT * 4.5)
 
-        # Generic labels for new space
+        # Axis labels for feature dimensions
         new_label_1 = Tex(r"f_i", font_size=18)
         new_label_1.next_to(new_h_line, RIGHT, buff=0.15).shift(RIGHT * 4.5)
         new_label_2 = Tex(r"f_j", font_size=18)
@@ -471,17 +516,27 @@ class Scene03_Challenges(Scene):
 
         new_space_group = VGroup(new_h_line, new_v_line, new_label_1, new_label_2, new_space_title)
 
-        # Create new points in the identity-aware space:
-        # A and B should be close together (clustered)
-        # C should be far from them
+        # -------------------------------------------------------------------------
+        # STEP 2: Define new positions for points (DESIRED behavior)
+        # -------------------------------------------------------------------------
+        # In identity-aware space:
+        #   A and B should be CLOSE (same identity, despite different appearance)
+        #   C should be FAR from A and B (different identity)
+        #
+        # Positions:
+        #   A: (4.3, 0.3) - upper left of new space
+        #   B: (4.5, -0.3) - lower left of new space (close to A)
+        #   C: (6.5, 0.2) - far right (different identity)
         new_pos_a = RIGHT * 4.3 + UP * 0.3
         new_pos_b = RIGHT * 4.5 + DOWN * 0.3
-        new_pos_c = RIGHT * 6.5 + UP * 0.2  # Far from A and B
+        new_pos_c = RIGHT * 6.5 + UP * 0.2
 
+        # Create new dots at desired positions
         new_dot_a = Dot(new_pos_a, color=CYAN, radius=0.12)
         new_dot_b = Dot(new_pos_b, color=CYAN, radius=0.12)
         new_dot_c = Dot(new_pos_c, color="#CC8855", radius=0.12)
 
+        # Labels for new dots
         new_label_a = Tex(r"A", font_size=20)
         new_label_b = Tex(r"B", font_size=20)
         new_label_c = Tex(r"C", font_size=20)
@@ -489,11 +544,15 @@ class Scene03_Challenges(Scene):
         new_label_b.next_to(new_dot_b, DOWN + RIGHT, buff=0.08)
         new_label_c.next_to(new_dot_c, UP + RIGHT, buff=0.08)
 
-        # Animate: draw new space and show desired behavior
+        # -------------------------------------------------------------------------
+        # STEP 3: Animate transition to new space
+        # -------------------------------------------------------------------------
+        # Show the new space appearing
         self.play(Write(new_space_group), run_time=0.5)
         self.wait(0.3)
 
-        # Move the points to their new positions (using stored references)
+        # Move existing points to new positions in identity-aware space
+        # Points will animate from raw-pixel positions to identity-aware positions
         self.play(
             self.dot_a.animate.move_to(new_pos_a),
             self.dot_b.animate.move_to(new_pos_b),
@@ -504,20 +563,23 @@ class Scene03_Challenges(Scene):
             run_time=0.8
         )
 
-        # Draw new connection lines
-        new_line_ab = Line(new_pos_a, new_pos_b, stroke_color=CYAN, stroke_width=2.0)
-        new_line_ac = Line(new_pos_a, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)
-        new_line_bc = Line(new_pos_b, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)
+        # -------------------------------------------------------------------------
+        # STEP 4: Show relationship lines and annotations
+        # -------------------------------------------------------------------------
+        # Draw solid lines showing relationships in identity-aware space
+        new_line_ab = Line(new_pos_a, new_pos_b, stroke_color=CYAN, stroke_width=2.0)  # A-B: close
+        new_line_ac = Line(new_pos_a, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)  # A-C: far
+        new_line_bc = Line(new_pos_b, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)  # B-C: far
 
         self.play(Write(new_line_ab), Write(new_line_ac), Write(new_line_bc), run_time=0.4)
 
-        # Draw cyan compactness circle around A and B
+        # Draw circle around A and B to show they form a cluster (same identity)
         center_ab = (new_pos_a + new_pos_b) / 2
         compactness_circle = Circle(radius=0.6, stroke_color=CYAN, stroke_width=2.0, fill_opacity=0)
         compactness_circle.move_to(center_ab)
         self.play(FadeIn(compactness_circle), run_time=0.3)
 
-        # Draw separation arrow from A/B cluster to C
+        # Draw arrow showing separation from A/B cluster to C
         separation_arrow = Arrow(
             center_ab + RIGHT * 0.5,
             new_pos_c + LEFT * 0.5,
@@ -527,17 +589,18 @@ class Scene03_Challenges(Scene):
         )
         self.play(Write(separation_arrow), run_time=0.3)
 
-        # Show behavior labels
+        # STEP 5: Show behavior labels
+        # Label for same identity → close
         same_label = Tex(r"\text{same identity}", font_size=20, color=CYAN)
-        same_label.next_to(compactness_circle, DOWN, buff=0.25)
-        close_arrow = Tex(r"\rightarrow", font_size=20, color=CYAN)
-        close_arrow.next_to(same_label, RIGHT, buff=0.1)
+        same_arrow = Tex(r"\rightarrow", font_size=20, color=CYAN)
+        same_arrow.next_to(same_label, RIGHT, buff=0.1)
         close_word = Tex(r"\text{close}", font_size=20, color=CYAN)
-        close_word.next_to(close_arrow, RIGHT, buff=0.1)
+        close_word.next_to(same_arrow, RIGHT, buff=0.1)
 
-        same_identity_group = VGroup(same_label, close_arrow, close_word)
+        same_identity_group = VGroup(same_label, same_arrow, close_word)
         same_identity_group.move_to(DOWN * 3.5 + LEFT * 2.5)
 
+        # Label for different identities → far apart
         different_label = Tex(r"\text{different identities}", font_size=20, color="#CC8855")
         different_arrow = Tex(r"\rightarrow", font_size=20, color="#CC8855")
         different_arrow.next_to(different_label, RIGHT, buff=0.1)
@@ -549,7 +612,8 @@ class Scene03_Challenges(Scene):
 
         self.play(Write(same_identity_group), Write(different_identity_group), run_time=0.4)
 
-        # Show the main linking statement (appears after the point movement)
+        # STEP 6: Display linking statement
+        # Show the key message: we need representation where identity defines distance
         linking_statement = Tex(
             r"\textbf{We need a representation where identity,}",
             font_size=30
@@ -566,11 +630,8 @@ class Scene03_Challenges(Scene):
         self.play(Write(linking_statement), Write(linking_statement2), run_time=0.5)
         self.wait(1.0)
 
-        # =====================================================================
-        # TRANSITION TO SCENE TITLE
-        # =====================================================================
-
-        # Fade out points and spaces
+        # STEP 7: Fade out all elements for scene title
+        # Prepare all elements for transition to Part 4 (scene title)
         fade_out_list = list(self.points_ab) + list(self.dist_labels) + [self.conclusion1, self.plane_group]
         fade_out_list.extend(self.all_part2_elements)
         fade_out_list.extend([
@@ -586,6 +647,12 @@ class Scene03_Challenges(Scene):
         self.play(*[FadeOut(obj) for obj in fade_out_list], run_time=0.6)
         self.wait(0.3)
 
+        # Clear the grid for Part 4
+        self.face_grid.set_opacity(0)
+
+        self.play(*[FadeOut(obj) for obj in fade_out_list], run_time=0.6)
+        self.wait(0.3)
+
         # Store for Part 4
         self.face_grid.set_opacity(0)  # Clear the grid
 
@@ -595,23 +662,26 @@ class Scene03_Challenges(Scene):
 
     def beat_0_part_4_scene_title(self):
         """
-        Black screen, large "Challenges" title,
-        subtitle, compact lines, then fade out.
+        Display the scene title "Challenges" with subtitle and key points,
+        then fade out to prepare for the next section.
         """
-        # Title
+        # STEP 1: Display main title
+        # Large bold title at the top center of the screen
         title = Tex(r"\textbf{Challenges}", font_size=72)
         title.center()
         title.move_to(UP * 1.5)
         self.add(title)
         self.play(Write(title), run_time=0.55)
 
-        # Subtitle
+        # STEP 2: Display subtitle
+        # Subtitle explaining the theme of this scene
         subtitle = Tex(r"\text{Why Face Recognition Is Harder Than It Looks}", font_size=26, color=MUTED)
         subtitle.next_to(title, DOWN, buff=0.45)
         self.add(subtitle)
         self.play(Write(subtitle), run_time=0.4)
 
-        # Accent line
+        # STEP 3: Draw accent line under subtitle
+        # Cyan accent line to visually separate title from content
         line = Line(
             LEFT * 3.2,
             RIGHT * 3.2,
@@ -623,7 +693,8 @@ class Scene03_Challenges(Scene):
         self.add(line)
         self.play(Write(line), run_time=0.3)
 
-        # Compact lines
+        # STEP 4: Display key points (compact lines)
+        # Three concise statements about the challenges
         compact1 = Tex(r"\text{Appearance changes.}", font_size=24)
         compact1.next_to(line, DOWN, buff=0.5)
 
@@ -633,13 +704,15 @@ class Scene03_Challenges(Scene):
         compact3 = Tex(r"\text{A better representation is needed.}", font_size=24)
         compact3.next_to(compact2, DOWN, buff=0.3)
 
+        # Animate each line appearing
         self.play(Write(compact1), run_time=0.3)
         self.play(Write(compact2), run_time=0.3)
         self.play(Write(compact3), run_time=0.3)
 
         self.wait(1.2)
 
-        # Fade out all
+        # STEP 5: Fade out all title elements
+        # Clear the screen for the next scene content
         self.play(
             FadeOut(title),
             FadeOut(subtitle),
