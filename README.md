@@ -182,12 +182,56 @@ pip install -e .
 
 ---
 
+## Render Commands
+
+Render videos using **ManimGL**:
+
+```bash
+manimgl scenes/<scene_file>.py <SceneClass> -w -q <quality>
+```
+
+### Quality Flags
+
+| Flag | Quality |
+|------|---------|
+| `l` | Low (480p) |
+| `m` | Medium (720p) |
+| `h` | High (1080p) |
+| `p` | Production |
+
+### All Scenes
+
+```bash
+# Scene 00 - Introduction
+manimgl scenes/scene00_introduction.py Scene00Introduction -w
+
+# Scene 01 - Human vs Computer
+manimgl scenes/scene01_human_vs_computer.py Scene01_HumanVsComputer -w
+
+# Scene 02 - Face Recognition Pipeline
+manimgl scenes/scene02_face_recognition_pipeline.py Scene02_FaceRecognitionPipeline -w
+
+# Scene 03 - Challenges
+manimgl scenes/scene03_challenges.py Scene03_Challenges -w
+```
+
+### Useful Flags
+
+| Flag | Description |
+|------|-------------|
+| `-w` | Write to file |
+| `-s` | Preview only (skip to end) |
+| `-n <num>` | Start at animation number |
+| `-o` | Write and open result |
+
+---
+
 ## Using Manim
 
 Render a specific scene:
 
 ```sh
-manim scenes/scene09_arcface_core.py ArcFaceCore -w
+manimgl scenes/scene09_arcface_core.py ArcFaceCore -w
 ```
 
 Useful flags:
