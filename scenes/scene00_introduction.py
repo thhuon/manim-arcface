@@ -1,15 +1,11 @@
 from manimlib import *
 import os
+from scenes.utils import *
 
 
-def get_svg_path(filename: str) -> str:
-    """Get full path to SVG file in decorations folder."""
-    return os.path.join(
-        os.path.dirname(__file__),
-        "decorations",
-        filename
-    )
-
+# =============================================================================
+# SCENE-SPECIFIC HELPERS - SVG loaders for scene00
+# =============================================================================
 
 def clean_stroke_svg(filename: str, height: float):
     """
@@ -17,7 +13,7 @@ def clean_stroke_svg(filename: str, height: float):
     No flat fills, outline-only stroke assets.
     """
     return SVGMobject(
-        file_name=get_svg_path(filename),
+        file_name=asset_path(filename),
         height=height,
     ).set_fill(WHITE, opacity=0.0).set_stroke(color=WHITE, width=2.0)
 
@@ -27,7 +23,7 @@ def filled_svg(filename: str, height: float, fill_opacity: float = 1.0):
     Load SVG with white fill.
     """
     return SVGMobject(
-        file_name=get_svg_path(filename),
+        file_name=asset_path(filename),
         height=height,
     ).set_fill(WHITE, opacity=fill_opacity)
 
