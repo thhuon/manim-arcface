@@ -114,7 +114,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         ])
 
         camera = make_camera_icon()
-        face_image = ImageMobject(asset_path("face_scan.png")).scale_to_height(2.0)
+        face_image = ImageMobject(asset_path("face_scan.png")).set_height(2.0)
 
         left_line = Line(camera.get_right(), face_image.get_left(), color=CYAN, stroke_width=2)
         right_line = Line(camera.get_right(), face_image.get_right(), color=CYAN, stroke_width=2)
@@ -124,7 +124,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
             latex(r"\mathbf{I}\in\mathbb{R}^{H\times W\times 3}", size=27, color=WHITE),
         ).arrange(DOWN, buff=0.15)
 
-        content = VGroup(camera, left_line, right_line, face_image, formula)
+        content = Group(camera, left_line, right_line, face_image, formula)
         content.arrange(RIGHT, buff=0.55)
         content.next_to(header, DOWN, buff=0.70)
 
@@ -133,7 +133,7 @@ class Scene02_FaceRecognitionPipeline(Scene):
         self.play(GrowArrow(left_line), GrowArrow(right_line), run_time=0.65)
         self.play(FadeIn(formula), run_time=0.45)
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+        self.play(FadeOut(Group(header, content)), run_time=0.65)
 
     # -------------------------------------------------------------------------
     # STAGE 2: Detection & Alignment - Locate, crop, normalize face pose
@@ -146,21 +146,21 @@ class Scene02_FaceRecognitionPipeline(Scene):
         ])
 
         # Replace all face graphics with single image
-        face_img = ImageMobject(asset_path("detection_alignment_face.png")).scale_to_height(2.2)
+        face_img = ImageMobject(asset_path("detection_alignment_face.png")).set_height(2.2)
 
-        flow = VGroup(face_img)
+        flow = Group(face_img)
         flow.arrange(RIGHT, buff=0.52)
         labels = VGroup(
             latex(r"\text{Face Detection \& Alignment}", size=19, color=MUTED),
         )
         labels.next_to(flow, DOWN, buff=0.20)
 
-        content = VGroup(flow, labels)
+        content = Group(flow, labels)
         content.next_to(header, DOWN, buff=0.70)
 
         self.play(FadeIn(face_img), FadeIn(labels), run_time=0.65)
         self.wait(1.2)
-        self.play(FadeOut(VGroup(header, content)), run_time=0.65)
+        self.play(FadeOut(Group(header, content)), run_time=0.65)
 
     # -------------------------------------------------------------------------
     # STAGE 3: Feature Extraction - Neural network transforms to embedding
