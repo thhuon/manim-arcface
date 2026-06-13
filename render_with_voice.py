@@ -8,6 +8,7 @@ import subprocess
 import argparse
 from pathlib import Path
 import edge_tts
+from PIL import Image, ImageDraw, ImageFont
 
 def get_scene_files():
     scenes_dir = Path("scenes")
@@ -29,13 +30,21 @@ def get_scene_files():
 
 def extract_classname(filepath):
     content = filepath.read_text()
-    match = re.search(r"class\s+(\w+)\(Scene\):", content)
+    match = re.search(r"class\s+(\w+)\s*\(\s*(?:ThreeD)?Scene\s*\)", content)
     if match:
         return match.group(1)
     return None
 
 def parse_narration_csv(filepath="narration.csv"):
-    scenes = {}
+    """
+    Parse narration.csv and return a dictionary mapping scene_id to a dict of:
+    {
+        "name": scene_name,
+        "subscene": subscene,
+        "narration": combined_narration
+    }
+    """
+    scenes_data = {}
     if not os.path.exists(filepath):
         print(f"Error: {filepath} not found!", file=sys.stderr)
         sys.exit(1)
@@ -54,17 +63,35 @@ def parse_narration_csv(filepath="narration.csv"):
             except ValueError:
                 continue
             
+            scene_name = row[1].strip()
+            subscene = row[2].strip()
             narration = row[4].strip()
-            if scene_id not in scenes:
-                scenes[scene_id] = []
-            if narration:
-                scenes[scene_id].append(narration)
+            
+            if scene_id not in scenes_data:
+                scenes_data[scene_id] = {
+                    "name": scene_name,
+                    "subscene": subscene,
+                    "narrations_list": []
+                }
+            
+            # Update name/subscene if empty from previous rows
+            if not scenes_data[scene_id]["name"] and scene_name:
+                scenes_data[scene_id]["name"] = scene_name
+            if not scenes_data[scene_id]["subscene"] and subscene:
+                scenes_data[scene_id]["subscene"] = subscene
                 
-    # Join the narrations for each scene into a single block of text
-    joined_scenes = {}
-    for scene_id, text_list in scenes.items():
-        joined_scenes[scene_id] = " ".join(text_list)
-    return joined_scenes
+            if narration:
+                scenes_data[scene_id]["narrations_list"].append(narration)
+                
+    # Join list into single block
+    final_narrations = {}
+    for scene_id, data in scenes_data.items():
+        final_narrations[scene_id] = {
+            "name": data["name"],
+            "subscene": data["subscene"],
+            "narration": " ".join(data["narrations_list"])
+        }
+    return final_narrations
 
 def chunk_text(text, max_chars=800):
     # Split by sentence boundaries, maintaining the punctuation
@@ -155,6 +182,126 @@ def get_duration(filepath):
         print(f"Warning: Failed to get duration of {filepath}: {e}")
         return 0.0
 
+def get_video_properties(filepath):
+    cmd_v = [
+        "ffprobe", "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=width,height,r_frame_rate",
+        "-of", "csv=p=0",
+        str(filepath)
+    ]
+    cmd_a = [
+        "ffprobe", "-v", "error",
+        "-select_streams", "a:0",
+        "-show_entries", "stream=sample_rate",
+        "-of", "csv=p=0",
+        str(filepath)
+    ]
+    
+    width, height, fps = 854, 480, 30.0
+    sample_rate = 24000
+    
+    try:
+        res_v = subprocess.run(cmd_v, stdout=subprocess.PIPE, text=True, check=True)
+        parts = res_v.stdout.strip().split(",")
+        if len(parts) >= 3:
+            width = int(parts[0])
+            height = int(parts[1])
+            fps_str = parts[2]
+            if "/" in fps_str:
+                n, d = fps_str.split("/")
+                fps = float(n) / float(d)
+            else:
+                fps = float(fps_str)
+    except Exception as e:
+        print(f"Warning: Failed to get video properties for {filepath}: {e}")
+        
+    try:
+        res_a = subprocess.run(cmd_a, stdout=subprocess.PIPE, text=True, check=True)
+        val = res_a.stdout.strip()
+        if val:
+            sample_rate = int(val)
+    except Exception as e:
+        # Expected if silent video has no audio
+        pass
+        
+    return width, height, fps, sample_rate
+
+def generate_title_card(width, height, scene_num, scene_name, subscene, output_path):
+    bg_color = (10, 14, 20)  # #0A0E14
+    image = Image.new("RGB", (width, height), bg_color)
+    draw = ImageDraw.Draw(image)
+    
+    line_y = int(height * 0.85)
+    line_thickness = max(2, int(height * 0.005))
+    draw.line(
+        [(int(width * 0.1), line_y), (int(width * 0.9), line_y)],
+        fill=(0, 212, 255),  # Cyan
+        width=line_thickness
+    )
+    
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    ]
+    font_title, font_subtitle, font_tag = None, None, None
+    for fp in font_paths:
+        if os.path.exists(fp):
+            try:
+                font_title = ImageFont.truetype(fp, int(height * 0.07))
+                font_subtitle = ImageFont.truetype(fp, int(height * 0.045))
+                font_tag = ImageFont.truetype(fp, int(height * 0.03))
+                break
+            except Exception:
+                pass
+                
+    if font_title is None:
+        font_title = ImageFont.load_default()
+        font_subtitle = ImageFont.load_default()
+        font_tag = ImageFont.load_default()
+        
+    draw.text(
+        (width // 2, int(height * 0.35)),
+        f"CHAPTER {scene_num:02d}",
+        fill=(62, 247, 160),  # Green
+        font=font_tag,
+        anchor="mm"
+    )
+    
+    draw.text(
+        (width // 2, int(height * 0.45)),
+        scene_name,
+        fill=(242, 246, 255),  # White
+        font=font_title,
+        anchor="mm"
+    )
+    
+    if subscene:
+        draw.text(
+            (width // 2, int(height * 0.58)),
+            subscene,
+            fill=(138, 148, 166),  # Muted
+            font=font_subtitle,
+            anchor="mm"
+        )
+        
+    image.save(output_path)
+
+def make_title_video(image_path, audio_sample_rate, video_fps, duration, output_path):
+    ffmpeg_cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", f"anullsrc=r={audio_sample_rate}:cl=mono",
+        "-loop", "1", "-i", str(image_path),
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "-t", str(duration),
+        "-pix_fmt", "yuv420p",
+        "-r", str(video_fps),
+        str(output_path)
+    ]
+    subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 def merge_video_audio(video_path, audio_path, output_path):
     video_dur = get_duration(video_path)
     audio_dur = get_duration(audio_path)
@@ -162,16 +309,27 @@ def merge_video_audio(video_path, audio_path, output_path):
     print(f"  Video duration: {video_dur:.2f}s")
     print(f"  Audio duration: {audio_dur:.2f}s")
     
-    # If audio is longer, pad/extend the video's last frame to match audio duration
     diff = audio_dur - video_dur
     if diff > 0.1:
-        print(f"  Audio is longer by {diff:.2f}s. Cloning last frame to pad video.")
-        # tpad=stop_mode=clone will repeat the last frame for stop_duration seconds
+        print(f"  Audio is longer by {diff:.2f}s. Trimming, padding with clone (avoiding blank screen), and fading out.")
+        # We trim video to max(0.1, video_dur - 1.5) to capture the state before fade out
+        freeze_time = max(0.1, video_dur - 1.5)
+        pad_dur = audio_dur - freeze_time
+        _, _, fps, _ = get_video_properties(video_path)
+        
+        filter_str = (
+            f"[0:v]fps={fps},"
+            f"trim=end={freeze_time},setpts=PTS-STARTPTS,"
+            f"tpad=stop_mode=clone:stop_duration={pad_dur},"
+            f"fade=t=out:st={audio_dur - 1.0}:d=1.0[v]"
+        )
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-i", str(video_path),
             "-i", str(audio_path),
-            "-vf", f"tpad=stop_mode=clone:stop_duration={diff}",
+            "-filter_complex", filter_str,
+            "-map", "[v]",
+            "-map", "1:a",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-c:a", "aac",
@@ -184,10 +342,11 @@ def merge_video_audio(video_path, audio_path, output_path):
             "ffmpeg", "-y",
             "-i", str(video_path),
             "-i", str(audio_path),
+            "-map", "0:v",
+            "-map", "1:a",
             "-c:v", "copy",
             "-c:a", "aac",
             "-b:a", "192k",
-            "-shortest", # End when the shortest stream ends (in case video is way longer and we want it to align)
             str(output_path)
         ]
         
@@ -217,7 +376,7 @@ async def main_async():
         
     print(f"Found {len(scene_files)} scenes to process.")
 
-    # Parse narration
+    # Parse narration full data
     narrations = parse_narration_csv()
     
     render_list = []
@@ -227,7 +386,7 @@ async def main_async():
             print(f"Warning: Could not extract Scene class name from {filepath}. Skipping.")
             continue
         
-        narration_text = narrations.get(scene_id, "")
+        scene_data = narrations.get(scene_id, {"name": f"Scene {scene_id}", "subscene": "", "narration": ""})
         expected_video = Path("videos") / f"{classname}.mp4"
         expected_audio = audio_dir / f"scene_{scene_id:02d}.mp3"
         voiced_video = voiced_dir / f"scene_{scene_id:02d}_voiced.mp4"
@@ -239,7 +398,9 @@ async def main_async():
             "video_path": expected_video,
             "audio_path": expected_audio,
             "voiced_path": voiced_video,
-            "narration": narration_text
+            "name": scene_data["name"],
+            "subscene": scene_data["subscene"],
+            "narration": scene_data["narration"]
         })
 
     # Render step
@@ -265,7 +426,7 @@ async def main_async():
 
     # Voiceover Generation & Audio Alignment step
     print("\n" + "="*80)
-    print("GENERATING NEURAL TTS VOICEOVERS & ALIGNING VIDEOS")
+    print("GENERATING NEURAL TTS VOICEOVERS & ALIGNING VIDEOS (SCENE-WISE TRANSITIONS)")
     print("="*80)
     
     valid_voiced_videos = []
@@ -289,13 +450,47 @@ async def main_async():
             # 3. Merge audio and video
             print("  Merging audio and video...")
             try:
-                merge_video_audio(item["video_path"], item["audio_path"], item["voiced_path"])
+                temp_voiced = voiced_dir / f"scene_{item['id']:02d}_temp_voiced.mp4"
+                merge_video_audio(item["video_path"], item["audio_path"], temp_voiced)
+                
+                # Extract properties from temp_voiced
+                width, height, fps, sample_rate = get_video_properties(temp_voiced)
+                
+                title_img = voiced_dir / f"scene_{item['id']:02d}_title.png"
+                title_video = voiced_dir / f"scene_{item['id']:02d}_title.mp4"
+                
+                # Draw title card
+                print(f"  Creating Chapter Title Slide: CHAPTER {item['id']:02d} - '{item['name']}'...")
+                generate_title_card(width, height, item["id"], item["name"], item["subscene"], title_img)
+                make_title_video(title_img, sample_rate, fps, 2.0, title_video)
+                
+                # Concat Title Slide + Voiced Video
+                concat_list_file = voiced_dir / f"scene_{item['id']:02d}_concat.txt"
+                with open(concat_list_file, "w") as f:
+                    f.write(f"file '{title_video.resolve()}'\n")
+                    f.write(f"file '{temp_voiced.resolve()}'\n")
+                
+                ffmpeg_concat_cmd = [
+                    "ffmpeg", "-y",
+                    "-f", "concat",
+                    "-safe", "0",
+                    "-i", str(concat_list_file),
+                    "-c", "copy",
+                    str(item["voiced_path"])
+                ]
+                subprocess.run(ffmpeg_concat_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                # Cleanup temp files
+                if temp_voiced.exists(): temp_voiced.unlink()
+                if title_img.exists(): title_img.unlink()
+                if title_video.exists(): title_video.unlink()
+                if concat_list_file.exists(): concat_list_file.unlink()
+                
                 valid_voiced_videos.append(item["voiced_path"])
             except Exception as e:
                 print(f"  ❌ Error merging video and audio: {e}")
         else:
-            print("  No narration text found for this scene. Using silent source video.")
-            # If no audio, just use the rendered video directly
+            print("  No narration text found for this scene. Using source video directly.")
             valid_voiced_videos.append(item["video_path"])
 
     if not valid_voiced_videos:
