@@ -239,3 +239,25 @@ Useful flags:
 * `-o` to write and open the result
 * `-s` to skip to the final frame
 * `-n <number>` to skip ahead to a specific animation
+
+### Render and Stitch All Scenes into a Full Video
+
+We have provided a script `render_all_scenes.py` at the root of the project to automate rendering all 30 scenes in order and stitching them into a single continuous video:
+
+1. **Render All (Draft/Preview Quality)**:
+   This will render everything at low resolution/framerate (fast compile) and merge them into `output/final_video_draft.mp4`:
+   ```sh
+   python render_all_scenes.py -d
+   ```
+
+2. **Render All (Production Quality)**:
+   This will render everything in full 1080p60 quality and merge them into `output/final_video.mp4`:
+   ```sh
+   python render_all_scenes.py
+   ```
+
+3. **Stitch Existing Renders Only**:
+   If you have already rendered the scenes and want to re-stitch them without re-rendering:
+   ```sh
+   python render_all_scenes.py --skip-render
+   ```
