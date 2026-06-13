@@ -38,6 +38,14 @@ def asset_path(filename: str) -> str:
     )
 
 
+def white_svg(filename: str, height: float) -> SVGMobject:
+    """Load SVG from decorations directory as a crisp solid-white flat vector."""
+    return SVGMobject(
+        asset_path(filename),
+        height=height,
+    ).set_fill(WHITE, 1.0).set_stroke(WHITE, 1.5)
+
+
 # =============================================================================
 # UTILITY FUNCTIONS - Basic building blocks
 # =============================================================================
