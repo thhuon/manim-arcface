@@ -242,22 +242,42 @@ Useful flags:
 
 ### Render and Stitch All Scenes into a Full Video
 
-We have provided a script `render_all_scenes.py` at the root of the project to automate rendering all 30 scenes in order and stitching them into a single continuous video:
+We have provided two scripts at the root of the project to automate rendering and stitching:
 
-1. **Render All (Draft/Preview Quality)**:
-   This will render everything at low resolution/framerate (fast compile) and merge them into `output/final_video_draft.mp4`:
-   ```sh
-   python render_all_scenes.py -d
-   ```
+#### 1. Silent Video Compilation (`render_all_scenes.py`)
+Automates rendering all 30 scenes in order and stitching them into a single continuous video:
 
-2. **Render All (Production Quality)**:
-   This will render everything in full 1080p60 quality and merge them into `output/final_video.mp4`:
-   ```sh
-   python render_all_scenes.py
-   ```
+* **Render All (Draft/Preview Quality)**:
+  ```sh
+  python render_all_scenes.py -d
+  ```
+* **Render All (Production Quality)**:
+  ```sh
+  python render_all_scenes.py
+  ```
+* **Stitch Existing Renders Only**:
+  ```sh
+  python render_all_scenes.py --skip-render
+  ```
 
-3. **Stitch Existing Renders Only**:
-   If you have already rendered the scenes and want to re-stitch them without re-rendering:
-   ```sh
-   python render_all_scenes.py --skip-render
-   ```
+#### 2. Voiced Video Compilation (`render_with_voice.py`)
+Generates high-quality neural voiceovers (using Microsoft Edge's Neural TTS) for each scene's narration, automatically aligns/extends the video duration (holding the final frame if the voiceover is longer), and merges them into a final narrated video:
+
+* **Render and Voice All (Draft/Preview Quality)**:
+  ```sh
+  python render_with_voice.py -d
+  ```
+* **Render and Voice All (Production Quality)**:
+  ```sh
+  python render_with_voice.py
+  ```
+* **Voice and Stitch Existing Renders Only (Extremely Fast)**:
+  If you have already rendered the scenes and just want to generate/add voiceovers and stitch them together:
+  ```sh
+  python render_with_voice.py --skip-render
+  ```
+* **Custom Neural Voices**:
+  By default, it uses `en-US-AndrewNeural`. You can specify a different voice (e.g., `en-US-AvaNeural` for a female narrator or `en-US-GuyNeural` for a male narrator):
+  ```sh
+  python render_with_voice.py --voice en-US-AvaNeural
+  ```
