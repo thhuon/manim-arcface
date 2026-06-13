@@ -66,9 +66,80 @@ def parse_narration_csv(filepath="narration.csv"):
         joined_scenes[scene_id] = " ".join(text_list)
     return joined_scenes
 
+def chunk_text(text, max_chars=800):
+    # Split by sentence boundaries, maintaining the punctuation
+    sentences = re.split(r'(?<=[.?!])\s+', text)
+    chunks = []
+    current_chunk = []
+    current_len = 0
+    for sentence in sentences:
+        if current_len + len(sentence) > max_chars:
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+            current_chunk = [sentence]
+            current_len = len(sentence)
+        else:
+            current_chunk.append(sentence)
+            current_len += len(sentence) + 1  # +1 for space
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    return chunks
+
+async def save_with_retry(text, voice, path, retries=5, delay=3.0):
+    for attempt in range(retries):
+        try:
+            communicate = edge_tts.Communicate(text, voice)
+            await communicate.save(str(path))
+            # Wait a small delay after a successful request to be polite to the API
+            await asyncio.sleep(0.5)
+            return
+        except Exception as e:
+            if attempt == retries - 1:
+                raise e
+            print(f"    ⚠️ TTS request failed (attempt {attempt+1}/{retries}). Retrying in {delay}s... (Error: {e})")
+            await asyncio.sleep(delay)
+            delay *= 2.0
+
 async def generate_tts(text, output_path, voice):
-    communicate = edge_tts.Communicate(text, voice)
-    await communicate.save(output_path)
+    # If the text is short, generate it directly in one request
+    if len(text) <= 800:
+        await save_with_retry(text, voice, output_path)
+        return
+
+    # For long narrations, chunk the text to bypass the API limit
+    chunks = chunk_text(text, max_chars=800)
+    print(f"  Text is long ({len(text)} chars). Splitting into {len(chunks)} chunks for TTS...")
+    
+    temp_files = []
+    for idx, chunk in enumerate(chunks):
+        chunk_path = output_path.with_name(f"{output_path.stem}_chunk_{idx}.mp3")
+        await save_with_retry(chunk, voice, chunk_path)
+        temp_files.append(chunk_path)
+    
+    # Concatenate the audio chunks using ffmpeg
+    concat_file = output_path.with_name("audio_concat_list.txt")
+    with open(concat_file, "w") as f:
+        for tf in temp_files:
+            escaped_path = str(tf.resolve()).replace("'", "'\\''")
+            f.write(f"file '{escaped_path}'\n")
+            
+    ffmpeg_cmd = [
+        "ffmpeg", "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", str(concat_file),
+        "-c", "copy",
+        str(output_path)
+    ]
+    
+    subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    # Clean up temp files
+    if concat_file.exists():
+        concat_file.unlink()
+    for tf in temp_files:
+        if tf.exists():
+            tf.unlink()
 
 def get_duration(filepath):
     cmd = [
