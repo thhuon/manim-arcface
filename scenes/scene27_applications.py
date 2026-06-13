@@ -1,43 +1,40 @@
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 33.6
+
 class Scene27_Applications(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        title = Tex(r"\text{Applications of Face Embedding Systems}", font_size=72)
-        title.to_edge(UP, buff=1.0)
-
+        title = Tex(r"\text{Real-World Applications}", font_size=52, color=WHITE)
+        title.to_edge(UP, buff=0.5)
         self.play(Write(title), run_time=2.0)
 
-        # Face ID on smartphones
-        smartphone = ImageMobject(asset_path("smartphone.png")).set_height(2.5)
-        face_id = SVGMobject(asset_path("face-id.svg"), height=1.5)
-        smartphone_group = Group(smartphone, face_id)
-        smartphone_group.arrange(DOWN, buff=0.2)
-        smartphone_group.to_edge(LEFT, buff=1.5)
+        applications = [
+            (r"\text{Smartphones}", r"\text{Face ID unlock}", CYAN),
+            (r"\text{Banking / ATM}", r"\text{Customer recognition}", GREEN),
+            (r"\text{Airports}", r"\text{Automated check-in}", BLUE),
+            (r"\text{Social Networks}", r"\text{Auto-tagging friends}", WHITE),
+            (r"\text{Medical}", r"\text{Genetic disorder diagnosis}", "#FFD700"),
+        ]
 
-        self.play(FadeIn(smartphone), ShowCreation(face_id), run_time=2.0)
-        self.play(smartphone_group.animate.to_edge(RIGHT, buff=1.5), run_time=1.5)
+        icons = VGroup()
+        for i, (name, use, col) in enumerate(applications):
+            cam = make_camera_icon() if i == 0 else make_abstract_face()
+            cam.scale(0.8)
+            name_tex = Tex(name, font_size=26, color=col)
+            use_tex = Tex(use, font_size=22, color=WHITE)
+            item = VGroup(cam, name_tex, use_tex)
+            item.arrange(RIGHT, buff=0.4)
+            icons.add(item)
 
-        # Automated check-in at airports
-        airport_icon = ImageMobject(asset_path("security_camera.png")).set_height(2.0)
-        airport_icon.to_edge(RIGHT, buff=1.5)
+        icons.arrange(DOWN, buff=0.45, aligned_edge=LEFT)
+        icons.next_to(title, DOWN, buff=0.5)
+        icons.to_edge(LEFT, buff=0.8)
 
-        self.play(FadeIn(airport_icon), run_time=2.0)
+        for item in icons:
+            self.play(FadeIn(item, shift=RIGHT * 0.1), run_time=0.8)
+            self.wait(2.0)
 
-        # Tagging friends on social networks
-        social_network_icon = ImageMobject(asset_path("face_scan.png")).set_height(2.0)
-        social_network_icon.next_to(airport_icon, DOWN, buff=0.5)
-
-        self.play(FadeIn(social_network_icon), run_time=2.0)
-
-        # Medical applications
-        medical_icon = SVGMobject(asset_path("brain.svg"), height=2.0)
-        medical_icon.next_to(social_network_icon, DOWN, buff=0.5)
-
-        self.play(ShowCreation(medical_icon), run_time=2.0)
-
-        self.wait(2.0)
-
-        self.play(FadeOut(title), FadeOut(smartphone_group), FadeOut(airport_icon), FadeOut(social_network_icon), FadeOut(medical_icon), run_time=2.0)
+        self.wait(6.0)

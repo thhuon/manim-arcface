@@ -1,63 +1,48 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 49.6
+
 class Scene19_Formula(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # Introduction
-        title = Tex(r"\text{ArcFace: Stricter Angle Condition}", font_size=72)
-        title.to_edge(UP, buff=1.0)
-        self.play(Write(title), run_time=1.5)
+        title = Tex(r"\text{The ArcFace Formula — Step by Step}", font_size=46, color=WHITE)
+        title.to_edge(UP, buff=0.4)
+        self.play(Write(title), run_time=2.0)
 
-        # Standard Softmax Explanation
-        embedding = Dot(ORIGIN, radius=0.05, color=WHITE)
-        class_A = Dot(RIGHT * 2, radius=0.05, color=WHITE)
-        class_B = Dot(LEFT * 2, radius=0.05, color=WHITE)
-        angle_A = Line(embedding.get_center(), class_A.get_center(), stroke_color=WHITE, stroke_width=1.5)
-        angle_B = Line(embedding.get_center(), class_B.get_center(), stroke_color=WHITE, stroke_width=1.5)
+        # Step 1: Standard softmax inner product
+        step1 = Tex(r"\text{Step 1: } W_{y_i}^T f_i = \cos\theta_{y_i}", font_size=32, color=MUTED)
+        step1.shift(UP * 1.5)
+        self.play(Write(step1), run_time=2.0)
+        self.wait(5.0)
 
-        softmax_group = VGroup(embedding, class_A, class_B, angle_A, angle_B)
-        softmax_group.arrange(RIGHT, buff=0.5)
+        # Step 2: Add margin
+        step2 = Tex(r"\text{Step 2: } \cos(\theta_{y_i} + m) \;\leftarrow\;\text{add margin }m", font_size=32, color=CYAN)
+        step2.next_to(step1, DOWN, buff=0.6)
+        self.play(Write(step2), run_time=2.0)
+        self.wait(5.0)
 
-        self.play(
-            ShowCreation(embedding),
-            ShowCreation(class_A),
-            ShowCreation(class_B),
-            ShowCreation(angle_A),
-            ShowCreation(angle_B),
-            run_time=2.0
+        # Step 3: Scale
+        step3 = Tex(r"\text{Step 3: Multiply by scale } s", font_size=32, color=GREEN)
+        step3.next_to(step2, DOWN, buff=0.6)
+        self.play(Write(step3), run_time=2.0)
+        self.wait(5.0)
+
+        # Full formula
+        full = Tex(
+            r"L = -\log\frac{e^{s\cos(\theta_{y_i}+m)}}{e^{s\cos(\theta_{y_i}+m)} + \sum_{j\neq y_i}e^{s\cos\theta_j}}",
+            font_size=34, color="#FFD700",
         )
+        full.next_to(step3, DOWN, buff=0.7)
+        rect = SurroundingRectangle(full, color="#FFD700", buff=0.15, corner_radius=0.1)
+        self.play(Write(full), run_time=2.5)
+        self.play(ShowCreation(rect), run_time=1.0)
 
-        # Narration: Standard softmax compares cosine values
-        narration = Tex(r"\text{Standard Softmax: } \cos(\theta_A) > \cos(\theta_B)", font_size=28)
-        narration.next_to(softmax_group, DOWN, buff=0.5)
-        self.play(Write(narration), run_time=1.5)
-
-        # ArcFace Explanation
-        arcface_group = softmax_group.copy()
-        correct_class = arcface_group[1]
-        incorrect_class = arcface_group[2]
-
-        margin = 0.5
-        arcface_angle = Line(embedding.get_center(), correct_class.get_center(), stroke_color=CYAN, stroke_width=1.5)
-        arcface_group.add(arcface_angle)
-
-        self.play(
-            Transform(arcface_group[3], arcface_angle),
-            run_time=1.5
+        insight = Tex(
+            r"\text{Margin } m \text{ pushes embeddings deeper into each class region}",
+            font_size=24, color=WHITE,
         )
-
-        # Narration: ArcFace uses cos(theta + m)
-        arcface_narration = Tex(r"\text{ArcFace: } \cos(\theta + m)", font_size=28)
-        arcface_narration.next_to(arcface_group, DOWN, buff=0.5)
-        self.play(Write(arcface_narration), run_time=1.5)
-
-        # Conclusion
-        conclusion = Tex(r"\text{Stricter Condition for Correct Classification}", font_size=36)
-        conclusion.to_edge(DOWN, buff=1.0)
-        self.play(Write(conclusion), run_time=1.5)
-
-        self.wait(2.0)
-    
+        insight.to_edge(DOWN, buff=0.5)
+        self.play(Write(insight), run_time=2.0)
+        self.wait(15.0)

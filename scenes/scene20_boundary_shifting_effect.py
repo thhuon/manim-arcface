@@ -1,47 +1,62 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 37.8
+
 class Scene20_BoundaryShiftingEffect(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # Title
-        title = Tex(r"\text{Boundary Shifting Effect in ArcFace}", font_size=72)
-        title.to_edge(UP, buff=1.0)
+        title = Tex(r"\text{Boundary Shifting Effect}", font_size=50, color=WHITE)
+        title.to_edge(UP, buff=0.5)
+        self.play(Write(title), run_time=2.0)
 
-        # Softmax boundary explanation
-        softmax_boundary = Tex(r"\text{Softmax: Embedding just needs to be on the correct side}", font_size=32)
-        softmax_boundary.next_to(title, DOWN, buff=0.8)
+        circle = Circle(radius=2.5, stroke_color=CYAN, stroke_width=1.5)
+        circle.shift(DOWN * 0.4)
+        center = circle.get_center()
+        self.play(ShowCreation(circle), run_time=1.0)
 
-        # Draw softmax boundary
-        softmax_line = Line(LEFT * 3, RIGHT * 3, stroke_color=WHITE, stroke_width=1.5)
-        softmax_line.next_to(softmax_boundary, DOWN, buff=0.5)
+        # Weight vector
+        w_angle = PI / 6
+        w_end = center + 2.5 * np.array([np.cos(w_angle), np.sin(w_angle), 0])
+        w_arr = Arrow(center, w_end, stroke_color=WHITE, stroke_width=2.5, buff=0)
+        w_lbl = Tex(r"W_{y_i}", font_size=22, color=WHITE)
+        w_lbl.next_to(w_end, UR, buff=0.1)
+        self.play(ShowCreation(w_arr), Write(w_lbl), run_time=1.0)
 
-        # ArcFace boundary explanation
-        arcface_boundary = Tex(r"\text{ArcFace: Embedding must move deeper into the correct region}", font_size=32)
-        arcface_boundary.next_to(softmax_boundary, DOWN, buff=0.8)
+        # Softmax boundary (old)
+        old_boundary_angle = w_angle + PI / 2
+        old_b1 = center + 3.0 * np.array([np.cos(old_boundary_angle), np.sin(old_boundary_angle), 0])
+        old_b2 = center - 3.0 * np.array([np.cos(old_boundary_angle), np.sin(old_boundary_angle), 0])
+        old_boundary = DashedLine(old_b1, old_b2, stroke_color=MUTED, stroke_width=2, dash_length=0.15)
+        old_label = Tex(r"\text{Softmax boundary}", font_size=20, color=MUTED)
+        old_label.next_to(old_b1, UP, buff=0.1)
+        self.play(ShowCreation(old_boundary), Write(old_label), run_time=1.2)
+        self.wait(4.0)
 
-        # Draw ArcFace boundary
-        arcface_line = Line(LEFT * 2.5, RIGHT * 2.5, stroke_color=CYAN, stroke_width=1.5, stroke_opacity=0.7)
-        arcface_line.next_to(arcface_boundary, DOWN, buff=0.5)
+        # ArcFace boundary (shifted by m)
+        m = 0.5
+        new_boundary_angle = w_angle + PI / 2 - m
+        new_b1 = center + 3.0 * np.array([np.cos(new_boundary_angle), np.sin(new_boundary_angle), 0])
+        new_b2 = center - 3.0 * np.array([np.cos(new_boundary_angle), np.sin(new_boundary_angle), 0])
+        new_boundary = DashedLine(new_b1, new_b2, stroke_color=GREEN, stroke_width=2.5, dash_length=0.15)
+        new_label = Tex(r"\text{ArcFace boundary (shifted by }m\text{)}", font_size=20, color=GREEN)
+        new_label.next_to(new_b2, DOWN, buff=0.1)
+        self.play(ShowCreation(new_boundary), Write(new_label), run_time=1.5)
 
-        # Buffer zone explanation
-        buffer_zone = Tex(r"\text{Additional buffer zone between classes}", font_size=32)
-        buffer_zone.next_to(arcface_line, DOWN, buff=0.8)
+        # Margin arc
+        arc_m = Arc(radius=0.55, start_angle=new_boundary_angle, angle=m,
+                     stroke_color="#FFD700", stroke_width=2)
+        arc_m.shift(center)
+        m_lbl = Tex(r"m", font_size=20, color="#FFD700")
+        m_lbl.move_to(center + 0.75 * np.array([np.cos(new_boundary_angle + m / 2),
+                                                  np.sin(new_boundary_angle + m / 2), 0]))
+        self.play(ShowCreation(arc_m), Write(m_lbl), run_time=1.0)
 
-        # Draw buffer zone
-        buffer_zone_rect = Rectangle(width=1.0, height=0.2, stroke_color=WHITE, stroke_width=1.5, fill_color=WHITE, fill_opacity=0.2)
-        buffer_zone_rect.next_to(arcface_line, DOWN, buff=0.5)
-
-        # Animation
-        self.play(Write(title), run_time=2)
-        self.play(Write(softmax_boundary), run_time=2)
-        self.play(ShowCreation(softmax_line), run_time=2)
-        self.play(Write(arcface_boundary), run_time=2)
-        self.play(ShowCreation(arcface_line), run_time=2)
-        self.play(Write(buffer_zone), run_time=2)
-        self.play(ShowCreation(buffer_zone_rect), run_time=2)
-
-        self.wait(2)
-    
+        caption = Tex(
+            r"\text{Margin shifts the decision boundary, forcing embedding closer to }W_{y_i}",
+            font_size=22, color=WHITE,
+        )
+        caption.to_edge(DOWN, buff=0.5)
+        self.play(Write(caption), run_time=2.0)
+        self.wait(12.0)

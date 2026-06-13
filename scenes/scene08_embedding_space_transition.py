@@ -1,54 +1,61 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 48.3
+
 class Scene08_EmbeddingSpaceTransition(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # Title
-        title = Tex(r"\text{Embedding Space Transition}", font_size=72)
-        title.to_edge(UP, buff=1.0)
-        self.play(Write(title), run_time=2.0)
+        recap = Tex(r"\text{Recap: Faces mapped to embedding vectors}", font_size=40, color=WHITE)
+        recap.to_edge(UP, buff=0.5)
+        self.play(Write(recap), run_time=2.0)
 
-        # Subtitle
-        subtitle = Tex(r"\text{Organizing Face Embeddings}", font_size=32)
-        subtitle.next_to(title, DOWN, buff=0.4)
-        self.play(Write(subtitle), run_time=1.5)
+        # Embedding circle (hypersphere cross-section)
+        sphere = Circle(radius=2.5, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
+        sphere.shift(DOWN * 0.5)
+        self.play(ShowCreation(sphere), run_time=1.5)
 
-        # High-dimensional space
-        space = VGroup()
-        dots = VGroup()
-        for _ in range(10):
-            dot = Dot(radius=0.05, color=WHITE)
-            dot.shift(RIGHT * np.random.uniform(-2.0, 2.0) + UP * np.random.uniform(-2.0, 2.0))
-            dots.add(dot)
-        space.add(dots)
+        # Points on the circle
+        np.random.seed(3)
+        points_on_sphere = VGroup()
+        labels_sphere = VGroup()
+        colours = [CYAN, GREEN, "#FF4444", WHITE, BLUE]
+        angle_list = np.linspace(0, 2 * PI, 5, endpoint=False)
+        for i, angle in enumerate(angle_list):
+            pt = sphere.get_center() + 2.5 * np.array([np.cos(angle), np.sin(angle), 0])
+            d = Dot(radius=0.13, color=colours[i])
+            d.move_to(pt)
+            lbl = Tex(f"\\text{{ID {i+1}}}", font_size=20, color=colours[i])
+            lbl.next_to(d, pt - sphere.get_center(), buff=0.18)
+            points_on_sphere.add(d)
+            labels_sphere.add(lbl)
 
-        # Embedding points
-        embeddings = VGroup()
-        for i in range(5):
-            embedding = Circle(radius=0.1, stroke_color=CYAN, fill_color=CYAN, fill_opacity=0.5)
-            embedding.shift(RIGHT * np.random.uniform(-2.0, 2.0) + UP * np.random.uniform(-2.0, 2.0))
-            embeddings.add(embedding)
-        space.add(embeddings)
+        self.play(ShowCreation(points_on_sphere), run_time=1.5)
+        self.play(FadeIn(labels_sphere), run_time=1.0)
 
-        self.play(ShowCreation(space), run_time=3.0)
+        # "All embeddings on unit hypersphere"
+        sphere_label = Tex(r"\text{Unit Hypersphere: } \|f\| = 1", font_size=28, color=CYAN)
+        sphere_label.to_edge(DOWN, buff=0.5)
+        self.play(Write(sphere_label), run_time=1.5)
+        self.wait(10.0)
 
-        # Narration and labels
-        label = Tex(r"\text{Face Embeddings}", font_size=24)
-        label.next_to(space, DOWN, buff=0.5)
-        self.play(Write(label), run_time=1.5)
+        # Angle between two points
+        pt0 = sphere.get_center() + 2.5 * np.array([np.cos(angle_list[0]), np.sin(angle_list[0]), 0])
+        pt1 = sphere.get_center() + 2.5 * np.array([np.cos(angle_list[1]), np.sin(angle_list[1]), 0])
+        angle_line0 = Line(sphere.get_center(), pt0, stroke_color=WHITE, stroke_width=1.5)
+        angle_line1 = Line(sphere.get_center(), pt1, stroke_color=WHITE, stroke_width=1.5)
+        angle_arc = Arc(radius=0.7, start_angle=angle_list[0], angle=angle_list[1] - angle_list[0],
+                        stroke_color=GREEN, stroke_width=2)
+        angle_arc.shift(sphere.get_center())
+        theta_label = Tex(r"\theta", font_size=26, color=GREEN)
+        theta_label.move_to(sphere.get_center() + 0.9 * np.array([np.cos((angle_list[0] + angle_list[1]) / 2),
+                                                                     np.sin((angle_list[0] + angle_list[1]) / 2), 0]))
 
-        # Optimization objective
-        objective = Tex(r"\text{Optimization Objective: Classify Correct Identity}", font_size=24)
-        objective.next_to(label, DOWN, buff=0.4)
-        self.play(Write(objective), run_time=2.0)
+        self.play(ShowCreation(angle_line0), ShowCreation(angle_line1), run_time=1.0)
+        self.play(ShowCreation(angle_arc), Write(theta_label), run_time=1.2)
 
-        # Loss function
-        loss_function = Tex(r"\text{Loss Function:}", font_size=24)
-        loss_function.next_to(objective, DOWN, buff=0.4)
-        self.play(Write(loss_function), run_time=1.5)
-
-        self.wait(2.0)
-  
+        cos_label = Tex(r"\text{Distance} = \cos\theta \text{ (angular distance)}", font_size=26, color=GREEN)
+        cos_label.next_to(sphere_label, UP, buff=0.25)
+        self.play(Write(cos_label), run_time=1.5)
+        self.wait(15.0)

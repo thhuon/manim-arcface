@@ -1,66 +1,79 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 97.7
+
 class Scene21_ArcfaceCore3dVisualization(Scene):
     def construct(self):
-        self.camera.background_color = '#111111'
+        self.camera.background_color = DARK
 
-        # Create a hypersphere
-        sphere = Circle(radius=1.5, stroke_color=WHITE, stroke_width=0.5, fill_opacity=0)
-        self.add(sphere)
+        title = Tex(r"\text{Embedding Space — Hypersphere View}", font_size=46, color=WHITE)
+        title.to_edge(UP, buff=0.4)
+        self.play(Write(title), run_time=2.0)
 
-        # Create a vector for an identity class
-        identity_vector = Arrow(ORIGIN, 1.5 * UP, color=CYAN, stroke_width=1.5)
-        self.add(identity_vector)
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 1 (0–30s): Unit circle with clusters
+        # ─────────────────────────────────────────────────────────────────
+        sphere = Circle(radius=2.6, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
+        sphere.shift(DOWN * 0.4)
+        center = sphere.get_center()
+        self.play(ShowCreation(sphere), run_time=1.2)
 
-        # Create a label for the identity vector
-        identity_label = Tex(r'\text{Class Direction}', font_size=20, color=WHITE)
-        identity_label.next_to(identity_vector, RIGHT, buff=0.2)
-        self.add(identity_label)
+        r_label = Tex(r"\text{Unit Hypersphere: } \|f\| = 1", font_size=24, color=MUTED)
+        r_label.to_edge(DOWN, buff=0.5)
+        self.play(Write(r_label), run_time=1.2)
 
-        # Create an embedding point
-        embedding = Dot(radius=0.05, color=CYAN).move_to(1.2 * RIGHT + 0.5 * UP)
-        self.add(embedding)
+        colours = [CYAN, GREEN, "#FF4444", "#FFD700"]
+        cluster_angles = [PI / 6, 3 * PI / 4, -PI / 3, PI + PI / 4]
 
-        # Create a line to represent the angle theta
-        theta_line = Line(ORIGIN, embedding.get_center(), color=WHITE, stroke_width=1.0, stroke_opacity=0.5)
-        self.add(theta_line)
+        np.random.seed(17)
+        all_dots = VGroup()
+        for angle_base, col in zip(cluster_angles, colours):
+            w_end = center + 2.6 * np.array([np.cos(angle_base), np.sin(angle_base), 0])
+            w_arr = Arrow(center, w_end, stroke_color=col, stroke_width=2, buff=0)
+            self.play(ShowCreation(w_arr), run_time=0.6)
+            for _ in range(7):
+                offset_a = angle_base + np.random.uniform(-0.18, 0.18)
+                r = np.random.uniform(2.3, 2.6)
+                d = Dot(radius=0.09, color=col)
+                d.move_to(center + r * np.array([np.cos(offset_a), np.sin(offset_a), 0]))
+                all_dots.add(d)
 
-        # Label the angle theta
-        theta_label = Tex(r'\theta', font_size=20, color=WHITE)
-        theta_label.move_to(0.5 * (ORIGIN + embedding.get_center()))
-        self.add(theta_label)
+        self.play(ShowCreation(all_dots), run_time=2.0)
+        self.wait(15.0)
 
-        # Narration: Now let us examine the embedding space from a geometric perspective.
-        self.play(ShowCreation(sphere), ShowCreation(identity_vector), ShowCreation(identity_label), ShowCreation(embedding), ShowCreation(theta_line), ShowCreation(theta_label), run_time=2)
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 2 (30–65s): Zoom into one angle theta
+        # ─────────────────────────────────────────────────────────────────
+        self.play(self.camera.frame.animate.scale(0.6).move_to(center + LEFT * 0.2), run_time=2.0)
 
-        # Create a group for rotation/scaling
-        scene_elements = Group(sphere, identity_vector, identity_label, embedding, theta_line, theta_label)
+        angle_a = cluster_angles[0]
+        angle_b = cluster_angles[1]
+        pt_a = center + 2.6 * np.array([np.cos(angle_a), np.sin(angle_a), 0])
+        pt_b = center + 2.6 * np.array([np.cos(angle_b), np.sin(angle_b), 0])
 
-        # Camera movement simulation: zoom in by scaling down the camera frame
-        self.play(self.camera.frame.animate.scale(0.7), run_time=3)
+        line_a = Line(center, pt_a, stroke_color=WHITE, stroke_width=1.5)
+        line_b = Line(center, pt_b, stroke_color=WHITE, stroke_width=1.5)
+        mid_angle = (angle_a + angle_b) / 2
+        arc_theta = Arc(radius=0.5, start_angle=angle_a, angle=angle_b - angle_a,
+                         stroke_color=GREEN, stroke_width=2.0)
+        arc_theta.shift(center)
+        theta_lbl = Tex(r"\theta", font_size=20, color=GREEN)
+        theta_lbl.move_to(center + 0.7 * np.array([np.cos(mid_angle), np.sin(mid_angle), 0]))
 
-        # Rotate the scene elements instead of the camera
-        self.play(Rotate(scene_elements, angle=30 * DEGREES), run_time=2)
+        self.play(ShowCreation(line_a), ShowCreation(line_b), run_time=1.0)
+        self.play(ShowCreation(arc_theta), Write(theta_lbl), run_time=1.0)
+        self.wait(18.0)
 
-        # Zoom in further and rotate
-        self.play(
-            self.camera.frame.animate.scale(0.8),
-            Rotate(scene_elements, angle=15 * DEGREES),
-            run_time=2
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 3 (65–97s): Zoom out — full hypersphere view
+        # ─────────────────────────────────────────────────────────────────
+        self.play(self.camera.frame.animate.scale(1 / 0.6).move_to(ORIGIN), run_time=2.0)
+
+        projection_label = Tex(
+            r"\text{All embeddings projected onto the unit sphere surface}",
+            font_size=24, color=CYAN,
         )
-
-        # Narration: ArcFace adds an angular margin to this angle, forcing the embedding of the correct class to move closer toward that class direction in order to be classified correctly.
-        arcface_label = Tex(r'\text{ArcFace adds angular margin}', font_size=20, color=WHITE)
-        arcface_label.next_to(embedding, DOWN, buff=0.2)
-        self.play(Write(arcface_label), run_time=2)
-
-        # Zoom out to show the full structure and rotate back
-        self.play(
-            self.camera.frame.animate.scale(1.78), # 1 / (0.7 * 0.8) ≈ 1.78 to return to normal scale
-            Rotate(scene_elements, angle=-45 * DEGREES),
-            run_time=2
-        )
-
-        self.wait(2)
+        projection_label.to_edge(DOWN, buff=0.5)
+        self.play(FadeOut(r_label), Write(projection_label), run_time=1.5)
+        self.wait(25.0)

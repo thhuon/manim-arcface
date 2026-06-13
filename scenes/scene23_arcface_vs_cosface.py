@@ -1,50 +1,40 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 29.2
+
 class Scene23_ArcfaceVsCosface(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # Title
-        title = Tex(r"\text{ArcFace vs. CosFace}", font_size=72)
-        title.to_edge(UP, buff=1.0)
-        self.play(Write(title), run_time=2)
+        title = Tex(r"\text{ArcFace vs.\ CosFace}", font_size=50, color=WHITE)
+        title.to_edge(UP, buff=0.5)
+        self.play(Write(title), run_time=2.0)
 
-        # Hypersphere
-        hypersphere = Circle(radius=2.5, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
-        self.play(ShowCreation(hypersphere), run_time=2.5)
+        # Comparison table
+        rows = [
+            (r"\text{Method}", r"\text{Margin Applied To}", r"\text{Formula}"),
+            (r"\text{CosFace}", r"\cos\theta_{y_i}", r"\cos\theta_{y_i} - m"),
+            (r"\text{ArcFace}", r"\theta_{y_i}", r"\cos(\theta_{y_i} + m)"),
+        ]
 
-        # CosFace explanation
-        cosface_text = Tex(r"\text{CosFace: Margin added to cosine value}", font_size=24, color="#cccccc")
-        cosface_text.next_to(title, DOWN, buff=0.8)
-        self.play(Write(cosface_text), run_time=2)
+        table = VGroup()
+        for i, row in enumerate(rows):
+            row_group = VGroup(*[Tex(t, font_size=26, color=(WHITE if i == 0 else ([MUTED, GREEN][i - 1]))) for t in row])
+            row_group.arrange(RIGHT, buff=1.2)
+            table.add(row_group)
+        table.arrange(DOWN, buff=0.55, aligned_edge=LEFT)
+        table.next_to(title, DOWN, buff=0.7)
 
-        cosface_illustration = VGroup(
-            Line(ORIGIN, RIGHT * 2.5, stroke_color=WHITE, stroke_width=1.5),
-            Tex(r"\theta", font_size=24).move_to(RIGHT * 2.5 + 0.2 * UP),
-            Tex(r"\cos(\theta)", font_size=24).move_to(RIGHT * 1.5 + 0.2 * UP),
-            Tex(r"\cos(\theta) - m", font_size=24).move_to(RIGHT * 1.5 + 0.2 * DOWN)
+        for row in table:
+            self.play(FadeIn(row, shift=RIGHT * 0.1), run_time=0.9)
+            self.wait(1.5)
+
+        # Key distinction
+        distinction = Tex(
+            r"\text{ArcFace margin is on }\theta\text{ — direct geometric meaning on hypersphere}",
+            font_size=24, color=CYAN,
         )
-        cosface_illustration.next_to(cosface_text, DOWN, buff=0.5)
-        self.play(ShowCreation(cosface_illustration), run_time=2.5)
-
-        # ArcFace explanation
-        arcface_text = Tex(r"\text{ArcFace: Margin added to angle } \theta", font_size=24, color="#cccccc")
-        arcface_text.next_to(cosface_text, DOWN, buff=0.8)
-        self.play(Write(arcface_text), run_time=2)
-
-        arcface_illustration = VGroup(
-            Line(ORIGIN, RIGHT * 2.5, stroke_color=WHITE, stroke_width=1.5),
-            Tex(r"\theta", font_size=24).move_to(RIGHT * 2.5 + 0.2 * UP),
-            Tex(r"\theta + m", font_size=24).move_to(RIGHT * 1.5 + 0.2 * UP)
-        )
-        arcface_illustration.next_to(arcface_text, DOWN, buff=0.5)
-        self.play(ShowCreation(arcface_illustration), run_time=2.5)
-
-        # Conclusion
-        conclusion = Tex(r"\text{ArcFace has a clearer geometric meaning}", font_size=24, color="#cccccc")
-        conclusion.next_to(arcface_text, DOWN, buff=0.8)
-        self.play(Write(conclusion), run_time=2)
-
-        self.wait(2)
+        distinction.to_edge(DOWN, buff=0.5)
+        self.play(Write(distinction), run_time=2.0)
+        self.wait(8.0)

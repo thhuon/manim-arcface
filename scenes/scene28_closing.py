@@ -1,43 +1,50 @@
-
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 24.3
+
 class Scene28_Closing(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # Create an embedding space
-        embedding_space = VGroup()
+        # Final embedding space reveal
+        sphere = Circle(radius=2.4, stroke_color=CYAN, stroke_width=1.5, fill_opacity=0)
+        sphere.shift(DOWN * 0.5)
+        center = sphere.get_center()
+
+        np.random.seed(99)
+        colours = [CYAN, GREEN, "#FF4444", "#FFD700"]
+        bases = [PI / 5, 2 * PI / 3, -PI / 3, PI + PI / 4]
         dots = VGroup()
-        for _ in range(10):
-            dot = Dot(radius=0.05, color=WHITE)
-            dot.shift(np.random.uniform(-2, 2) * RIGHT + np.random.uniform(-2, 2) * UP)
-            dots.add(dot)
-        embedding_space.add(dots)
+        for angle_base, col in zip(bases, colours):
+            for _ in range(8):
+                a = angle_base + np.random.uniform(-0.18, 0.18)
+                r = np.random.uniform(2.1, 2.4)
+                d = Dot(radius=0.10, color=col)
+                d.move_to(center + r * np.array([np.cos(a), np.sin(a), 0]))
+                dots.add(d)
 
-        # Create a neural network
-        neural_network = make_neural_network()
-        neural_network.to_edge(UP, buff=2)
+        nn = make_neural_network()
+        nn.scale(1.2).shift(UP * 2.5)
 
-        # Initial zoomed-in view
-        zoomed_in_view = embedding_space.copy()
-        zoomed_in_view.move_to(ORIGIN)
+        self.play(ShowCreation(nn), run_time=1.5)
+        self.play(ShowCreation(sphere), run_time=1.0)
+        self.play(ShowCreation(dots), run_time=1.5)
+        self.wait(2.0)
 
-        # Zoom out to reveal the entire embedding space
-        self.play(FadeIn(zoomed_in_view), run_time=1)
-        self.play(zoomed_in_view.animate.scale(2), run_time=2)
+        # Zoom out
+        self.play(self.camera.frame.animate.scale(1.15), run_time=1.5)
 
-        # Zoom out to reveal the neural network
-        self.play(zoomed_in_view.animate.scale(1.5), neural_network.animate.shift(DOWN * 2), run_time=2)
+        # Closing words
+        closing = Tex(
+            r"\text{From pixels } \rightarrow \text{ geometry } \rightarrow \text{ identity}",
+            font_size=34, color=WHITE,
+        )
+        closing.to_edge(DOWN, buff=0.8)
+        self.play(Write(closing), run_time=2.0)
+        self.wait(3.0)
 
-        # Final zoom out
-        self.play(zoomed_in_view.animate.scale(1.5), neural_network.animate.shift(DOWN * 3), run_time=2)
-
-        # Fade to black
-        self.play(FadeOut(zoomed_in_view), FadeOut(neural_network), run_time=1)
-
-        # End screen
-        end_screen = Tex(r"\text{Thank you for watching!}", font_size=48)
-        end_screen.move_to(ORIGIN)
-        self.play(Write(end_screen), run_time=2)
-        self.play(FadeOut(end_screen), run_time=1)
+        thankyou = Tex(r"\text{Thank you for watching!}", font_size=44, color="#FFD700")
+        thankyou.to_edge(DOWN, buff=0.3)
+        self.play(FadeOut(closing), FadeIn(thankyou, shift=UP * 0.2), run_time=1.5)
+        self.wait(4.0)

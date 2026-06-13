@@ -309,35 +309,8 @@ def merge_video_audio(video_path, audio_path, output_path):
     print(f"  Video duration: {video_dur:.2f}s")
     print(f"  Audio duration: {audio_dur:.2f}s")
     
-    diff = audio_dur - video_dur
-    if diff > 0.1:
-        print(f"  Audio is longer by {diff:.2f}s. Trimming, padding with clone (avoiding blank screen), and fading out.")
-        # We trim video to max(0.1, video_dur - 1.5) to capture the state before fade out
-        freeze_time = max(0.1, video_dur - 1.5)
-        pad_dur = audio_dur - freeze_time
-        _, _, fps, _ = get_video_properties(video_path)
-        
-        filter_str = (
-            f"[0:v]fps={fps},"
-            f"trim=end={freeze_time},setpts=PTS-STARTPTS,"
-            f"tpad=stop_mode=clone:stop_duration={pad_dur},"
-            f"fade=t=out:st={audio_dur - 1.0}:d=1.0[v]"
-        )
-        ffmpeg_cmd = [
-            "ffmpeg", "-y",
-            "-i", str(video_path),
-            "-i", str(audio_path),
-            "-filter_complex", filter_str,
-            "-map", "[v]",
-            "-map", "1:a",
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            "-c:a", "aac",
-            "-b:a", "192k",
-            str(output_path)
-        ]
-    else:
-        print("  Video is longer or equal to audio. Direct merging without re-encoding video.")
+    if video_dur <= 0 or audio_dur <= 0:
+        print("  Error: Zero duration detected. Direct copying.")
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-i", str(video_path),
@@ -346,10 +319,57 @@ def merge_video_audio(video_path, audio_path, output_path):
             "-map", "1:a",
             "-c:v", "copy",
             "-c:a", "aac",
-            "-b:a", "192k",
             str(output_path)
         ]
-        
+        subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return
+
+    _, _, fps, _ = get_video_properties(video_path)
+    factor = audio_dur / video_dur
+    MAX_SLOW = 1.5  # never slow video by more than 1.5x (keeps motion natural)
+    
+    if factor <= MAX_SLOW:
+        # Safe range: stretch video speed to match audio
+        print(f"  Stretching video by {factor:.3f}x to match audio.")
+        fade_start = max(0.0, audio_dur - 1.0)
+        filter_str = (
+            f"[0:v]setpts={factor}*PTS,fps={fps},"
+            f"fade=t=out:st={fade_start}:d=1.0[v]"
+        )
+        ffmpeg_cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-filter_complex", filter_str,
+            "-map", "[v]",
+            "-map", "1:a",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k",
+            "-t", f"{audio_dur:.3f}",
+            str(output_path)
+        ]
+    else:
+        # Audio is much longer: play video normally then freeze last frame
+        print(f"  Audio {factor:.2f}x longer — playing video normally then freezing last frame.")
+        pad_dur = audio_dur - video_dur
+        fade_start = max(0.0, audio_dur - 1.0)
+        filter_str = (
+            f"[0:v]fps={fps},"
+            f"tpad=stop_mode=clone:stop_duration={pad_dur:.3f},"
+            f"fade=t=out:st={fade_start}:d=1.0[v]"
+        )
+        ffmpeg_cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-filter_complex", filter_str,
+            "-map", "[v]",
+            "-map", "1:a",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k",
+            "-t", f"{audio_dur:.3f}",
+            str(output_path)
+        ]
     subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 async def main_async():

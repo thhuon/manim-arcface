@@ -1,229 +1,104 @@
 from manimlib import *
 from scenes.utils import *
 
+TARGET = 79.5
+
 class Scene04_ChallengesWhyAccuracyMatters(Scene):
     def construct(self):
-        # 1. Background setup
         self.camera.background_color = DARK
-        
-        # 2. Main Title
-        title = Tex(r"\textbf{Why Accuracy Matters}", font_size=40)
-        title.set_color(WHITE)
-        title.to_edge(UP, buff=0.8)
-        
-        subtitle = Tex(r"\text{When face recognition is widely deployed, errors have real consequences.}", font_size=20)
-        subtitle.set_color(MUTED)
-        subtitle.next_to(title, DOWN, buff=0.2)
-        
+
+        title = Tex(r"\text{Why Accuracy Matters}", font_size=52, color=WHITE)
+        title.to_edge(UP, buff=0.5)
+        self.play(Write(title), run_time=2.0)
+
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 1 (0–25s): Low-accuracy model — mistakes
+        # ─────────────────────────────────────────────────────────────────
+        low_label = Tex(r"\text{Low-Accuracy Model}", font_size=30, color=MUTED)
+        low_label.next_to(title, DOWN, buff=0.5)
+        self.play(Write(low_label), run_time=1.5)
+
+        # Two faces, wrong match
+        face_a = make_abstract_face()
+        face_a.scale(1.3).shift(LEFT * 2.5 + DOWN * 0.8)
+        face_b = make_abstract_face()
+        face_b.scale(1.3).shift(RIGHT * 2.5 + DOWN * 0.8)
+
+        lbl_a = Tex(r"\text{Alice}", font_size=26, color=WHITE)
+        lbl_a.next_to(face_a, DOWN, buff=0.2)
+        lbl_b = Tex(r"\text{Bob}", font_size=26, color=WHITE)
+        lbl_b.next_to(face_b, DOWN, buff=0.2)
+
+        wrong_arrow = Arrow(face_a.get_right(), face_b.get_left(), stroke_color="#FF4444", stroke_width=3, buff=0.15)
+        wrong_label = Tex(r"\text{False Match!}", font_size=28, color="#FF4444")
+        wrong_label.next_to(wrong_arrow, UP, buff=0.2)
+
+        self.play(ShowCreation(face_a), ShowCreation(face_b), run_time=1.5)
+        self.play(Write(lbl_a), Write(lbl_b), run_time=1.0)
+        self.play(ShowCreation(wrong_arrow), run_time=1.0)
+        self.play(Write(wrong_label), run_time=1.2)
+        self.wait(8.0)
+
+        # Real-world consequence labels
+        consequences = [
+            r"\text{Security breach}",
+            r"\text{Wrong person identified}",
+            r"\text{Privacy violation}",
+        ]
+        cons_group = VGroup(*[Tex(t, font_size=24, color="#FF4444") for t in consequences])
+        cons_group.arrange(DOWN, buff=0.3)
+        cons_group.to_edge(DOWN, buff=0.7)
+        for c in cons_group:
+            self.play(FadeIn(c, shift=UP * 0.1), run_time=0.7)
+        self.wait(5.0)
+
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 2 (25–55s): The 1-in-a-million problem
+        # ─────────────────────────────────────────────────────────────────
         self.play(
-            Write(title),
-            Write(subtitle),
-            run_time=1.5
+            FadeOut(low_label), FadeOut(face_a), FadeOut(face_b),
+            FadeOut(lbl_a), FadeOut(lbl_b), FadeOut(wrong_arrow),
+            FadeOut(wrong_label), FadeOut(cons_group),
+            run_time=1.0,
         )
-        self.wait(1.0)
-        
-        # 3. Create three columns/use cases
-        
-        # Column 1: Smartphone (User Experience / Convenience)
-        phone_body = RoundedRectangle(width=1.0, height=1.8, corner_radius=0.15, stroke_color=WHITE, stroke_width=2)
-        phone_screen = RoundedRectangle(width=0.9, height=1.7, corner_radius=0.10, stroke_color=MUTED, stroke_width=1)
-        phone_screen.move_to(phone_body)
-        phone_notch = Rectangle(width=0.4, height=0.1, stroke_width=0, fill_color=WHITE, fill_opacity=1)
-        phone_notch.move_to(phone_body.get_top() + 0.08 * DOWN)
-        
-        # Lock SVG on screen
-        lock_icon = SVGMobject(asset_path("lock.svg"))
-        lock_icon.set_height(0.5)
-        lock_icon.set_color(CYAN)
-        lock_icon.move_to(phone_body.get_center())
-        
-        smartphone_group = VGroup(phone_body, phone_screen, phone_notch, lock_icon)
-        
-        smartphone_label = Tex(r"\textbf{User Experience}", font_size=22)
-        smartphone_label.set_color(WHITE)
-        smartphone_desc = Tex(
-            r"\begin{array}{c}"
-            r"\text{Daily convenience}\\"
-            r"\text{e.g., unlocking phone}"
-            r"\end{array}",
-            font_size=18,
-            color=MUTED
+
+        mil_text = Tex(r"\text{1 in 1{,}000{,}000 faces}", font_size=44, color=CYAN)
+        mil_text.move_to(UP * 0.8)
+        self.play(Write(mil_text), run_time=2.0)
+
+        context = Tex(
+            r"\text{Security systems, airports, banking —}\\"
+            r"\text{even a 0.001\% error is unacceptable}",
+            font_size=28, color=WHITE,
         )
-        smartphone_col = VGroup(smartphone_group, smartphone_label, smartphone_desc)
-        smartphone_col.arrange(DOWN, buff=0.3)
-        
-        # Column 2: Security (Surveillance / Security)
-        sec_camera = make_camera_icon()
-        sec_camera.scale(1.2)
-        
-        # Add a scanning cone or detection box under it to look advanced
-        cone = Polygon(
-            sec_camera.get_center(),
-            sec_camera.get_center() + DOWN * 1.5 + LEFT * 0.8,
-            sec_camera.get_center() + DOWN * 1.5 + RIGHT * 0.8,
-            stroke_width=0,
-            fill_color=CYAN,
-            fill_opacity=0.15
-        )
-        sec_camera_group = VGroup(cone, sec_camera)
-        
-        security_label = Tex(r"\textbf{Security Systems}", font_size=22)
-        security_label.set_color(WHITE)
-        security_desc = Tex(
-            r"\begin{array}{c}"
-            r"\text{Intrusion prevention}\\"
-            r"\text{e.g., suspect tracking}"
-            r"\end{array}",
-            font_size=18,
-            color=MUTED
-        )
-        security_col = VGroup(sec_camera_group, security_label, security_desc)
-        security_col.arrange(DOWN, buff=0.3)
-        
-        # Column 3: eKYC / Banking (Financial Security)
-        ekyc_shield = Circle(radius=0.75, stroke_color=GREEN, stroke_width=2, fill_opacity=0)
-        lock_icon_bank = SVGMobject(asset_path("lock.svg"))
-        lock_icon_bank.set_height(0.6)
-        lock_icon_bank.set_color(GREEN)
-        lock_icon_bank.move_to(ekyc_shield)
-        ekyc_group = VGroup(ekyc_shield, lock_icon_bank)
-        
-        ekyc_label = Tex(r"\textbf{eKYC \& Banking}", font_size=22)
-        ekyc_label.set_color(WHITE)
-        ekyc_desc = Tex(
-            r"\begin{array}{c}"
-            r"\text{Financial safety}\\"
-            r"\text{e.g., card verification}"
-            r"\end{array}",
-            font_size=18,
-            color=MUTED
-        )
-        ekyc_col = VGroup(ekyc_group, ekyc_label, ekyc_desc)
-        ekyc_col.arrange(DOWN, buff=0.3)
-        
-        # Arrange all three columns
-        columns = Group(smartphone_col, security_col, ekyc_col)
-        columns.arrange(RIGHT, buff=1.2)
-        columns.move_to(DOWN * 0.5)
-        
-        # Show columns
-        self.play(
-            FadeIn(smartphone_col, shift=UP),
-            FadeIn(security_col, shift=UP),
-            FadeIn(ekyc_col, shift=UP),
-            run_time=1.8
-        )
-        self.wait(1.0)
-        
-        # 4. Scenario animations (interactive beat)
-        
-        # Scenario 1: Phone fails to unlock
-        self.play(
-            smartphone_col.animate.scale(1.2),
-            security_col.animate.set_opacity(0.3),
-            ekyc_col.animate.set_opacity(0.3),
-            run_time=1.0
-        )
-        self.wait(0.5)
-        
-        # Show lock blinking red to show failure
-        red_cross = Tex(r"\times", font_size=60, color=RED)
-        red_cross.move_to(lock_icon.get_center())
-        
-        self.play(
-            lock_icon.animate.set_color(RED),
-            FadeIn(red_cross, scale=0.5),
-            run_time=0.5
-        )
-        self.wait(1.5)
-        self.play(
-            FadeOut(red_cross),
-            lock_icon.animate.set_color(CYAN),
-            smartphone_col.animate.scale(1.0/1.2),
-            run_time=0.8
-        )
-        
-        # Scenario 2: Security Camera misidentifying
-        self.play(
-            smartphone_col.animate.set_opacity(0.3),
-            security_col.animate.set_opacity(1.0).scale(1.2),
-            ekyc_col.animate.set_opacity(0.3),
-            run_time=1.0
-        )
-        self.wait(0.5)
-        
-        # Cone flashes red / warning
-        warning_mark = Tex(r"!", font_size=48, color=RED)
-        warning_mark.next_to(sec_camera, UP, buff=0.2)
-        
-        self.play(
-            cone.animate.set_color(RED).set_opacity(0.25),
-            sec_camera.animate.set_color(RED),
-            FadeIn(warning_mark, scale=0.5),
-            run_time=0.6
-        )
-        self.wait(1.5)
-        self.play(
-            FadeOut(warning_mark),
-            cone.animate.set_color(CYAN).set_opacity(0.15),
-            sec_camera.animate.set_color(CYAN),
-            security_col.animate.scale(1.0/1.2),
-            run_time=0.8
-        )
-        
-        # Scenario 3: eKYC / Banking failure (Serious risks)
-        self.play(
-            smartphone_col.animate.set_opacity(0.3),
-            security_col.animate.set_opacity(0.3),
-            ekyc_col.animate.set_opacity(1.0).scale(1.2),
-            run_time=1.0
-        )
-        self.wait(0.5)
-        
-        # Bank account access alarm / lock breaks or error message
-        dollar_sign = Tex(r"\$ \rightarrow \text{Blocked}", font_size=20, color=RED)
-        dollar_sign.next_to(ekyc_group, UP, buff=0.2)
-        
-        self.play(
-            ekyc_shield.animate.set_color(RED),
-            lock_icon_bank.animate.set_color(RED),
-            Write(dollar_sign),
-            run_time=0.6
-        )
-        self.wait(1.8)
-        self.play(
-            FadeOut(dollar_sign),
-            ekyc_shield.animate.set_color(GREEN),
-            lock_icon_bank.animate.set_color(GREEN),
-            ekyc_col.animate.scale(1.0/1.2),
-            run_time=0.8
-        )
-        
-        # Restore all to normal
-        self.play(
-            smartphone_col.animate.set_opacity(1.0),
-            security_col.animate.set_opacity(1.0),
-            ekyc_col.animate.set_opacity(1.0),
-            run_time=1.0
-        )
-        
-        # Summary text
-        summary = Tex(r"\text{Real-world variations require high-stability representation.}", font_size=24)
-        summary.set_color(CYAN)
-        summary.move_to(DOWN * 3.4)
-        
-        self.play(
-            Write(summary),
-            run_time=1.2
-        )
-        self.wait(2.0)
-        
-        # Fade out everything
-        self.play(
-            FadeOut(title),
-            FadeOut(subtitle),
-            FadeOut(columns),
-            FadeOut(summary),
-            run_time=1.2
-        )
-        self.wait(0.5)
+        context.next_to(mil_text, DOWN, buff=0.5)
+        self.play(Write(context), run_time=2.5)
+        self.wait(12.0)
+
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 3 (55–79s): High-accuracy model — correct match
+        # ─────────────────────────────────────────────────────────────────
+        self.play(FadeOut(mil_text), FadeOut(context), run_time=1.0)
+
+        hi_label = Tex(r"\text{High-Accuracy Model (ArcFace)}", font_size=30, color=GREEN)
+        hi_label.next_to(title, DOWN, buff=0.5)
+        self.play(Write(hi_label), run_time=1.5)
+
+        face_c = make_abstract_face()
+        face_c.scale(1.3).shift(LEFT * 2.5 + DOWN * 0.8)
+        face_d = make_abstract_face()
+        face_d.scale(1.3).shift(RIGHT * 2.5 + DOWN * 0.8)
+        lbl_c = Tex(r"\text{Alice}", font_size=26, color=WHITE)
+        lbl_c.next_to(face_c, DOWN, buff=0.2)
+        lbl_d = Tex(r"\text{Alice (verified)}", font_size=26, color=WHITE)
+        lbl_d.next_to(face_d, DOWN, buff=0.2)
+
+        ok_arrow = Arrow(face_c.get_right(), face_d.get_left(), stroke_color=GREEN, stroke_width=3, buff=0.15)
+        ok_label = Tex(r"\checkmark\;\text{Correct Match}", font_size=28, color=GREEN)
+        ok_label.next_to(ok_arrow, UP, buff=0.2)
+
+        self.play(ShowCreation(face_c), ShowCreation(face_d), run_time=1.5)
+        self.play(Write(lbl_c), Write(lbl_d), run_time=1.0)
+        self.play(ShowCreation(ok_arrow), run_time=1.0)
+        self.play(Write(ok_label), run_time=1.2)
+        self.wait(12.0)

@@ -1,100 +1,82 @@
 from manimlib import *
-import os
 from scenes.utils import *
 
+TARGET = 30.7  # seconds (narration duration)
 
-# =============================================================================
-# SCENE-SPECIFIC HELPERS - SVG loaders for scene00
-# =============================================================================
-
-def clean_stroke_svg(filename: str, height: float):
-    """
-    Load SVG using 3Blue1Brown blueprint style:
-    No flat fills, outline-only stroke assets.
-    """
-    return SVGMobject(
-        file_name=asset_path(filename),
-        height=height,
-    ).set_fill(WHITE, opacity=0.0).set_stroke(color=WHITE, width=2.0)
-
-
-def filled_svg(filename: str, height: float, fill_opacity: float = 1.0):
-    """
-    Load SVG with white fill.
-    """
-    return SVGMobject(
-        file_name=asset_path(filename),
-        height=height,
-    ).set_fill(WHITE, opacity=fill_opacity)
-
-
-class Scene00Introduction(Scene):
-    """
-    Sub-Screen 1: Device flow diagram — sequential reveal left to right.
-    Sub-Screen 2: Grand LaTeX title fades in.
-    """
-
+class Scene00_Introduction(Scene):
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
-        # ── STEP 1: Asset Loading & Proportional Scaling ──────────────────────
+        # ── Background grid ──────────────────────────────────────────────
+        grid = make_pixel_grid(size=8, n=16)
+        grid.set_opacity(0.08)
+        self.add(grid)
 
-        # LEFT: devices.svg with white fill
-        devices = filled_svg("devices.svg", height=2.5)
-        devices.scale(1.8)
+        # ── Camera icon top-left ─────────────────────────────────────────
+        cam = make_camera_icon()
+        cam.scale(1.4).to_corner(UL, buff=0.5)
 
-        # Closed lock — sits strictly above devices
-        lock_closed = filled_svg("lock.svg", height=1.0)
-        lock_closed.scale(0.65)
-        lock_closed.next_to(devices, UP, buff=0.3)
+        # ── Face + landmarks center ──────────────────────────────────────
+        face = make_abstract_face()
+        face.scale(1.6).move_to(ORIGIN)
+        lm = make_landmarks()
+        lm.scale(1.6).move_to(face.get_center())
 
-        left_group = VGroup(devices, lock_closed)
+        # ── Neural network right ─────────────────────────────────────────
+        nn = make_neural_network()
+        nn.scale(1.1).to_edge(RIGHT, buff=0.6)
 
-        # CENTER: extended arrow + "FaceID" LaTeX label above
-        center_arrow = Arrow(LEFT, RIGHT, stroke_color=WHITE, stroke_width=4)
-        center_arrow.scale(1.6)
+        # ── Title ────────────────────────────────────────────────────────
+        title = Tex(r"\text{ArcFace: Modern Face Recognition}", font_size=52, color=WHITE)
+        title.to_edge(UP, buff=0.4)
 
-        face_id_label = Tex(r"\text{FaceID}", font_size=36, color=WHITE)
-        face_id_label.next_to(center_arrow, UP, buff=0.3)
+        sub = Tex(r"\text{How computers see and recognize human faces}", font_size=28, color=MUTED)
+        sub.next_to(title, DOWN, buff=0.25)
 
-        center_group = VGroup(center_arrow, face_id_label)
+        # ── Accent line under title ──────────────────────────────────────
+        accent = Line(LEFT * 4, RIGHT * 4, stroke_color=CYAN, stroke_width=2)
+        accent.next_to(sub, DOWN, buff=0.18)
 
-        # RIGHT: open lock
-        lock_open = filled_svg("lock-open.svg", height=1.0)
-        lock_open.scale(0.8)
-        right_group = lock_open
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 1 (0–8s): Title + camera icon appear
+        # ─────────────────────────────────────────────────────────────────
+        self.play(Write(title), run_time=2.5)
+        self.play(FadeIn(sub, shift=UP * 0.15), run_time=1.5)
+        self.play(ShowCreation(accent), run_time=1.0)
+        self.play(FadeIn(cam), run_time=1.0)
+        self.wait(2.0)
 
-        # ── STEP 2: Horizontal Spacing & Maximizing Screen Coverage ───────────
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 2 (8–18s): Face + landmarks emerge — "how do these systems work?"
+        # ─────────────────────────────────────────────────────────────────
+        self.play(ShowCreation(face), run_time=2.0)
+        self.play(FadeIn(lm), run_time=1.2)
 
-        main_diagram = VGroup(left_group, center_group, right_group)
-        main_diagram.arrange(RIGHT, buff=1.5)
-        main_diagram.scale(1.2)
-        main_diagram.move_to(ORIGIN)
+        q_text = Tex(r"\text{How does a computer recognise a face?}", font_size=30, color=CYAN)
+        q_text.next_to(face, DOWN, buff=0.55)
+        self.play(Write(q_text), run_time=2.0)
+        self.wait(2.8)
+        self.play(FadeOut(q_text), run_time=0.8)
 
-        # ── STEP 3: Title Block (Sub-Screen 2) ─────────────────────────────
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 3 (18–28s): Neural network appears — "mathematical representation"
+        # ─────────────────────────────────────────────────────────────────
+        self.play(ShowCreation(nn), run_time=2.0)
 
-        line1 = Tex(r"\textbf{Understanding ArcFace}", font_size=72, color=WHITE)
-        line2 = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
-        title_block = VGroup(line1, line2)
-        title_block.arrange(DOWN, buff=0.4)
-        title_block.move_to(ORIGIN)
+        # Arrow: face → nn
+        arr = Arrow(face.get_right(), nn.get_left(), stroke_color=CYAN, stroke_width=2, buff=0.15)
+        self.play(ShowCreation(arr), run_time=1.2)
 
-        # ── STEP 4: Animation Sequence ───────────────────────────────────────
+        vec_label = Tex(r"\text{512-D embedding}", font_size=24, color=GREEN)
+        vec_label.next_to(arr, UP, buff=0.15)
+        self.play(FadeIn(vec_label, shift=UP * 0.1), run_time=1.0)
+        self.wait(2.0)
 
-        # Sub-Screen 1: sequential reveal left → center → right
-        self.play(FadeIn(left_group), run_time=0.5)
-        self.wait(0.3)
-        self.play(FadeIn(center_group), run_time=0.5)
-        self.wait(0.3)
-        self.play(FadeIn(right_group), run_time=0.5)
-        self.wait(1.5)
-
-        # Transition: fade out diagram
-        self.play(FadeOut(main_diagram), run_time=0.8)
-
-        # Sub-Screen 2: fade in LaTeX title
-        self.play(FadeIn(title_block), run_time=1.5)
-        self.wait(2.5)
-
-        self.play(FadeOut(title_block), run_time=1.0)
-        self.wait(0.5)
+        # ─────────────────────────────────────────────────────────────────
+        # BEAT 4 (28–30s): Camera zoom-in hold
+        # ─────────────────────────────────────────────────────────────────
+        self.play(
+            self.camera.frame.animate.scale(0.85).move_to(face.get_center()),
+            run_time=1.5,
+        )
+        self.wait(0.7)
