@@ -762,7 +762,7 @@ class Scene03_Challenges(Scene):
         ref_face = get_face_image("face_normal.png", height=1.8)
         if ref_face is None:
             ref_face = get_face_image("face_1.png", height=1.8)
-        
+
         ref_frame = RoundedRectangle(
             width=2.2,
             height=2.2,
@@ -773,11 +773,11 @@ class Scene03_Challenges(Scene):
             fill_opacity=0.15
         )
         ref_frame.move_to(ref_face)
-        
+
         ref_label = Tex(r"\text{Reference Image}", font_size=20, color=MUTED)
         ref_label.next_to(ref_frame, DOWN, buff=0.2)
-        
-        ref_group = VGroup(ref_face, ref_frame, ref_label)
+
+        ref_group = Group(ref_face, ref_frame, ref_label)
         ref_group.move_to(LEFT * 2.5 + UP * 0.3)
         self.add(ref_group)
         self.play(FadeIn(ref_group), run_time=0.5)
@@ -828,9 +828,9 @@ class Scene03_Challenges(Scene):
             
             # Calculate position in arc
             angle = center_angle + (i / max(num_variations - 1, 1)) * angle_spread - angle_spread / 2
-            x = RIGHT * 2.5 + RIGHT * arc_radius * np.cos(angle)
-            y = UP * 0.3 + UP * arc_radius * 0.45 * np.sin(angle)
-            pos = np.array([x, y, 0])
+            x = RIGHT[0] * (2.5 + arc_radius * np.cos(angle))
+            y = UP[1] * (0.3 + arc_radius * 0.45 * np.sin(angle))
+            pos = x + y
             
             # Create card frame
             card = RoundedRectangle(
@@ -849,7 +849,7 @@ class Scene03_Challenges(Scene):
             label = Tex(label_text, font_size=16, color=MUTED)
             label.next_to(card, DOWN, buff=0.12)
             
-            group = VGroup(card, img, label)
+            group = Group(card, img, label)
             group.save_state()
             variation_cards.append(card)
             variation_groups.append(group)
@@ -1341,8 +1341,17 @@ class Scene03_Challenges(Scene):
         phone_face = Circle(radius=0.5, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
         phone_face.move_to(phone.get_center() + UP * 0.3)
         
-        # Lock icon
-        lock = Tex(r"\Lock{}", font_size=32, color=RED)
+        # Lock icon (custom geometry)
+        lock_body = RoundedRectangle(
+            width=0.35, height=0.25, corner_radius=0.05,
+            stroke_color=RED, stroke_width=2, fill_opacity=0
+        )
+        lock_shackle = Arc(
+            radius=0.15, start_angle=180 * DEGREES, angle=180 * DEGREES,
+            stroke_color=RED, stroke_width=2
+        )
+        lock_shackle.shift(UP * 0.05)
+        lock = VGroup(lock_shackle, lock_body)
         lock.move_to(phone.get_center() + DOWN * 0.5)
         
         # Score display
