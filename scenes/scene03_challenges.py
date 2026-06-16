@@ -99,6 +99,21 @@ class Scene03_Challenges(Scene):
         # Part 4: Scene title
         self.beat_0_part_4_scene_title()
 
+        # =====================================================================
+        # BEAT 1: VARIABILITY AS A STRESS TEST
+        # =====================================================================
+        self.beat_1_variability_stress_test()
+
+        # =====================================================================
+        # BEAT 2: WHAT IF THERE IS MISLEADING?
+        # =====================================================================
+        self.beat_2_misleading_system()
+
+        # =====================================================================
+        # BEAT 3: TRANSITION TO EMBEDDING SPACE
+        # =====================================================================
+        self.beat_3_transition_to_embedding()
+
     # =========================================================================
     # BEAT 0 - PART 1: Human Recognition
     # =========================================================================
@@ -722,6 +737,961 @@ class Scene03_Challenges(Scene):
             FadeOut(compact3),
             run_time=0.45
         )
+        self.wait(0.3)
+
+    # =========================================================================
+    # BEAT 1: VARIABILITY AS A STRESS TEST
+    # =========================================================================
+
+    def beat_1_variability_stress_test(self):
+        """
+        Beat 1: Show how appearance changes challenge face recognition.
+        - Reference face with variation cards (lighting, pose, expression, etc.)
+        - Transformation arrows from reference to each variation
+        - All map to same identity
+        - Key message about invariance
+        """
+        # STEP 1: Fade in title
+        title = Tex(r"\textbf{Variability}", font_size=56, color=CYAN)
+        title.move_to(UP * 3.2)
+        self.add(title)
+        self.play(Write(title), run_time=0.5)
+        self.wait(0.4)
+
+        # STEP 2: Show reference face (center-left)
+        ref_face = get_face_image("face_normal.png", height=1.8)
+        if ref_face is None:
+            ref_face = get_face_image("face_1.png", height=1.8)
+        
+        ref_frame = RoundedRectangle(
+            width=2.2,
+            height=2.2,
+            corner_radius=0.15,
+            stroke_color=CYAN,
+            stroke_width=2,
+            fill_color=PANEL,
+            fill_opacity=0.15
+        )
+        ref_frame.move_to(ref_face)
+        
+        ref_label = Tex(r"\text{Reference Image}", font_size=20, color=MUTED)
+        ref_label.next_to(ref_frame, DOWN, buff=0.2)
+        
+        ref_group = VGroup(ref_face, ref_frame, ref_label)
+        ref_group.move_to(LEFT * 2.5 + UP * 0.3)
+        self.add(ref_group)
+        self.play(FadeIn(ref_group), run_time=0.5)
+        self.wait(0.4)
+
+        # STEP 3: Load available face images for variations
+        variation_files = [
+            "face_1.png", "face_2.png", "face_3.png", "face_4.png",
+            "face_5.png", "face_6.png", "face_7.png", "face_8.png",
+            "face_9.png", "face_10.png", "face_11.png", "face_12.png"
+        ]
+        
+        available_variations = []
+        for f in variation_files:
+            path = asset_path(f)
+            if os.path.exists(path):
+                img = ImageMobject(path)
+                img.set_height(0.85)
+                available_variations.append((f, img))
+        
+        # Define variation types with labels
+        variation_labels = [
+            (r"\text{Lighting}", "light"),
+            (r"\text{Pose}", "pose"),
+            (r"\text{Expression}", "expression"),
+            (r"\text{Occlusion}", "occlusion"),
+            (r"\text{Blur}", "blur"),
+            (r"\text{Shadow}", "shadow"),
+            (r"\text{Age}", "age"),
+            (r"\text{Camera}", "camera")
+        ]
+
+        # STEP 4: Arrange variations in arc layout on the right
+        num_variations = min(len(available_variations), len(variation_labels))
+        arc_radius = 2.8
+        center_angle = -30 * DEGREES
+        angle_spread = 100 * DEGREES
+        
+        variation_cards = []
+        variation_groups = []
+        
+        for i in range(num_variations):
+            if i >= len(available_variations):
+                break
+                
+            filename, img = available_variations[i]
+            label_text, vtype = variation_labels[i]
+            
+            # Calculate position in arc
+            angle = center_angle + (i / max(num_variations - 1, 1)) * angle_spread - angle_spread / 2
+            x = RIGHT * 2.5 + RIGHT * arc_radius * np.cos(angle)
+            y = UP * 0.3 + UP * arc_radius * 0.45 * np.sin(angle)
+            pos = np.array([x, y, 0])
+            
+            # Create card frame
+            card = RoundedRectangle(
+                width=1.1,
+                height=1.1,
+                corner_radius=0.1,
+                stroke_color=MUTED,
+                stroke_width=1.5,
+                fill_color=PANEL,
+                fill_opacity=0.08
+            )
+            card.move_to(pos)
+            img.move_to(pos)
+            
+            # Label below card
+            label = Tex(label_text, font_size=16, color=MUTED)
+            label.next_to(card, DOWN, buff=0.12)
+            
+            group = VGroup(card, img, label)
+            group.save_state()
+            variation_cards.append(card)
+            variation_groups.append(group)
+            self.add(group)
+
+        # Fade in variations one by one
+        for group in variation_groups:
+            self.play(FadeIn(group), run_time=0.15)
+        self.wait(0.3)
+
+        # STEP 5: Draw transformation arrows from reference to each variation
+        transformation_labels = [
+            (r"T_{\text{light}}", "light"),
+            (r"T_{\text{pose}}", "pose"),
+            (r"T_{\text{expression}}", "expression"),
+            (r"T_{\text{occlusion}}", "occlusion"),
+            (r"T_{\text{blur}}", "blur"),
+            (r"T_{\text{shadow}}", "shadow"),
+            (r"T_{\text{age}}", "age"),
+            (r"T_{\text{camera}}", "camera")
+        ]
+
+        arrows = []
+        for i, (tlabel_text, _) in enumerate(transformation_labels[:len(variation_groups)]):
+            if i >= len(variation_groups):
+                break
+                
+            start_pos = ref_group.get_center() + RIGHT * 1.2
+            end_pos = variation_groups[i].get_center() + LEFT * 0.6
+            
+            arrow = Arrow(
+                start_pos,
+                end_pos,
+                buff=0.1,
+                stroke_color=CYAN,
+                stroke_width=1.5,
+                max_tip_length_to_length_ratio=0.15
+            )
+            
+            # Transform label positioned along arrow
+            tlabel = Tex(tlabel_text, font_size=15, color=CYAN)
+            mid_pos = (start_pos + end_pos) / 2 + UP * 0.25
+            tlabel.move_to(mid_pos)
+            
+            arrow_group = VGroup(arrow, tlabel)
+            arrows.append(arrow_group)
+            self.add(arrow_group)
+
+        # Animate arrows appearing
+        for arrow in arrows:
+            self.play(FadeIn(arrow), run_time=0.2)
+        self.wait(0.4)
+
+        # STEP 6: Show simple overlays for each variation type
+        # Create overlay effects (simplified vector graphics)
+        overlays = []
+        overlay_types = ["light", "pose", "expression", "occlusion", "blur", "shadow", "age", "camera"]
+        
+        for i, (vtype, card) in enumerate(zip(overlay_types[:len(variation_groups)], variation_cards)):
+            overlay = self.create_variation_overlay(card, vtype)
+            if overlay:
+                overlays.append(overlay)
+                self.add(overlay)
+        
+        # Animate overlays briefly
+        for overlay in overlays[:4]:  # Show first 4 overlays
+            self.play(FadeIn(overlay), run_time=0.15)
+        self.wait(0.3)
+        for overlay in overlays[:4]:
+            self.play(FadeOut(overlay), run_time=0.1)
+
+        # STEP 7: Show identity label and convergence arrows
+        identity_label = Tex(r"y = \text{Person A}", font_size=24, color=GREEN)
+        identity_label.move_to(DOWN * 2.8)
+        self.add(identity_label)
+        self.play(Write(identity_label), run_time=0.4)
+
+        # Draw cyan arrows from all variation cards converging to identity label
+        convergence_arrows = []
+        for group in variation_groups:
+            start = group.get_center()
+            end = identity_label.get_center() + UP * 0.5
+            conv_arrow = Arrow(
+                start + DOWN * 0.3,
+                end,
+                buff=0.1,
+                stroke_color=GREEN,
+                stroke_width=1.2,
+                max_tip_length_to_length_ratio=0.12
+            )
+            convergence_arrows.append(conv_arrow)
+            self.add(conv_arrow)
+
+        for arrow in convergence_arrows:
+            self.play(FadeIn(arrow), run_time=0.12)
+        self.wait(0.4)
+
+        # STEP 8: Display "Many observations → one identity"
+        many_text = Tex(r"\text{Many observations}", font_size=28)
+        arrow_text = Tex(r"\rightarrow", font_size=28)
+        one_text = Tex(r"\text{one identity}", font_size=28, color=GREEN)
+        
+        many_text.move_to(LEFT * 2.5 + DOWN * 1.8)
+        arrow_text.next_to(many_text, RIGHT, buff=0.3)
+        one_text.next_to(arrow_text, RIGHT, buff=0.3)
+        
+        mapping_group = VGroup(many_text, arrow_text, one_text)
+        self.add(mapping_group)
+        self.play(Write(mapping_group), run_time=0.4)
+        self.wait(0.5)
+
+        # STEP 9: Key message about invariance
+        key_msg1 = Tex(r"\textbf{The representation must be}", font_size=26)
+        key_msg2 = Tex(r"\textbf{invariant to appearance changes.}", font_size=26, color=CYAN)
+        
+        key_msg1.move_to(DOWN * 3.8)
+        key_msg2.next_to(key_msg1, DOWN, buff=0.15)
+        
+        key_msg_group = VGroup(key_msg1, key_msg2)
+        self.add(key_msg_group)
+        self.play(Write(key_msg_group), run_time=0.5)
+        self.wait(0.6)
+
+        # STEP 10: Explanatory line
+        explain = Tex(
+            r"\text{Lighting, pose, blur, and occlusion should not change who the person is.}",
+            font_size=18,
+            color=MUTED
+        )
+        explain.move_to(DOWN * 4.4)
+        self.add(explain)
+        self.play(Write(explain), run_time=0.4)
+        self.wait(0.5)
+
+        # STEP 11: Fade out all except 2-3 difficult examples
+        fade_out_elements = [title, ref_group] + arrows + convergence_arrows + [mapping_group, key_msg_group, explain]
+        self.play(*[FadeOut(obj) for obj in fade_out_elements], run_time=0.4)
+
+        # Keep only 2-3 difficult examples (low light, mask, side pose)
+        keep_indices = [0, 3, 1]  # First few variations as "difficult" examples
+        for i, group in enumerate(variation_groups):
+            if i not in keep_indices:
+                self.play(FadeOut(group), run_time=0.2)
+        self.wait(0.3)
+
+        # Fade out remaining difficult examples
+        for i in keep_indices:
+            if i < len(variation_groups):
+                self.play(FadeOut(variation_groups[i]), run_time=0.2)
+        self.wait(0.3)
+
+        # STEP 12: Transition warning line
+        transition_line = Tex(
+            r"\text{But if the system handles these variations incorrectly,}",
+            font_size=22,
+            color=WHITE
+        )
+        transition_line2 = Tex(
+            r"\text{the result is not just a small visual error.}",
+            font_size=22,
+            color=WHITE
+        )
+        
+        transition_line.move_to(UP * 0.5)
+        transition_line2.next_to(transition_line, DOWN, buff=0.2)
+        
+        transition_group = VGroup(transition_line, transition_line2)
+        self.add(transition_group)
+        self.play(Write(transition_group), run_time=0.5)
+        self.wait(0.8)
+
+        # Fade out transition
+        self.play(FadeOut(transition_group), run_time=0.4)
+        self.wait(0.3)
+
+    def create_variation_overlay(self, card, vtype):
+        """Create a simple overlay effect for variation type."""
+        card_center = card.get_center()
+        card_width = 1.1
+        
+        if vtype == "light":
+            # Dark gradient overlay
+            overlay = Rectangle(
+                width=card_width,
+                height=card_width,
+                stroke_width=0,
+                fill_color=DARK,
+                fill_opacity=0.4
+            )
+            overlay.move_to(card_center)
+            return overlay
+            
+        elif vtype == "pose":
+            # Slight rotation indicator (arc)
+            arc = Arc(
+                radius=0.4,
+                start_angle=30 * DEGREES,
+                angle=60 * DEGREES,
+                stroke_color=CYAN,
+                stroke_width=1.5
+            )
+            arc.move_to(card_center + 0.5 * RIGHT)
+            return arc
+            
+        elif vtype == "expression":
+            # Highlight region for mouth/eyes
+            highlight = Circle(
+                radius=0.15,
+                stroke_color=YELLOW,
+                stroke_width=1.5,
+                fill_opacity=0
+            )
+            highlight.move_to(card_center + 0.25 * DOWN)
+            return highlight
+            
+        elif vtype == "occlusion":
+            # Mask-like overlay
+            mask = Rectangle(
+                width=0.35,
+                height=0.25,
+                stroke_color=MUTED,
+                stroke_width=1.5,
+                fill_color=DARK,
+                fill_opacity=0.6
+            )
+            mask.move_to(card_center + 0.25 * UP)
+            return mask
+            
+        elif vtype == "blur":
+            # Grid overlay for blur effect
+            blur_grid = VGroup()
+            for j in range(3):
+                line_h = Line(
+                    card_center + LEFT * 0.4 + UP * (-0.3 + j * 0.3),
+                    card_center + RIGHT * 0.4 + UP * (-0.3 + j * 0.3),
+                    stroke_color=WHITE,
+                    stroke_width=0.5,
+                    stroke_opacity=0.3
+                )
+                blur_grid.add(line_h)
+            return blur_grid
+            
+        elif vtype == "shadow":
+            # Half-face dark overlay
+            shadow = Rectangle(
+                width=card_width * 0.5,
+                height=card_width,
+                stroke_width=0,
+                fill_color=DARK,
+                fill_opacity=0.5
+            )
+            shadow.move_to(card_center + 0.25 * RIGHT)
+            return shadow
+        
+        return None
+
+    # =========================================================================
+    # BEAT 2: WHAT IF THERE IS MISLEADING?
+    # =========================================================================
+
+    def beat_2_misleading_system(self):
+        """
+        Beat 2: Show different types of face recognition errors.
+        - False Reject: correct user rejected
+        - False Accept: wrong person accepted
+        - Identity Mismatch: ambiguous comparison
+        """
+        # STEP 1: Fade in title
+        title = Tex(r"\textbf{WHAT IF THERE IS MISLEADING IN THE SYSTEM?}", font_size=38, color=WHITE)
+        title.move_to(UP * 3.4)
+        self.add(title)
+        self.play(Write(title), run_time=0.5)
+        self.wait(0.4)
+
+        # STEP 2: Create three scenario cards
+        card_width = 3.8
+        card_height = 3.5
+        card_spacing = 4.2
+
+        # Card 1: False Reject (Smartphone Unlock)
+        card1 = self.create_false_reject_card(card_width, card_height)
+        card1.move_to(LEFT * card_spacing + DOWN * 0.5)
+
+        # Card 2: False Accept (Security Camera)
+        card2 = self.create_false_accept_card(card_width, card_height)
+        card2.move_to(DOWN * 0.5)
+
+        # Card 3: Identity Mismatch (eKYC Verification)
+        card3 = self.create_identity_mismatch_card(card_width, card_height)
+        card3.move_to(RIGHT * card_spacing + DOWN * 0.5)
+
+        # STEP 3: Fade in all cards with muted opacity initially
+        all_cards = VGroup(card1, card2, card3)
+        all_cards.set_opacity(0.4)
+        self.add(all_cards)
+        
+        self.play(FadeIn(all_cards), run_time=0.5)
+        self.wait(0.3)
+
+        # STEP 4: Zoom into Card 1 (False Reject)
+        self.play(
+            card2.animate.set_opacity(0.2),
+            card3.animate.set_opacity(0.2),
+            card1.animate.set_opacity(1.0).scale(1.15).move_to(ORIGIN + UP * 0.3),
+            run_time=0.6
+        )
+        self.wait(0.4)
+
+        # Show score vs threshold animation
+        score_bar1 = self.get_score_bar(0.42, card1)
+        self.add(score_bar1)
+        self.play(FadeIn(score_bar1), run_time=0.3)
+
+        # Show threshold line
+        threshold_line1 = Line(LEFT * 1.8, RIGHT * 1.8, stroke_color=RED, stroke_width=2)
+        threshold_line1.move_to(DOWN * 0.8)
+        threshold_label1 = Tex(r"\tau = 0.60", font_size=18, color=RED)
+        threshold_label1.next_to(threshold_line1, RIGHT, buff=0.2)
+        self.add(threshold_line1, threshold_label1)
+        self.play(Write(threshold_line1), Write(threshold_label1), run_time=0.3)
+
+        # Reveal False Reject label
+        fr_label = Tex(r"\textbf{False Reject}", font_size=32, color=YELLOW)
+        fr_label.move_to(DOWN * 1.6)
+        fr_meaning = Tex(r"\text{The real user is rejected.}", font_size=20, color=MUTED)
+        fr_meaning.next_to(fr_label, DOWN, buff=0.15)
+        self.play(Write(fr_label), run_time=0.4)
+        self.play(Write(fr_meaning), run_time=0.3)
+        self.wait(0.5)
+
+        # Return to full layout
+        self.play(
+            FadeOut(score_bar1),
+            FadeOut(threshold_line1),
+            FadeOut(threshold_label1),
+            FadeOut(fr_label),
+            FadeOut(fr_meaning),
+            card1.animate.scale(1/1.15).move_to(LEFT * card_spacing + DOWN * 0.5).set_opacity(0.4),
+            card2.animate.set_opacity(0.4),
+            card3.animate.set_opacity(0.4),
+            run_time=0.5
+        )
+        self.wait(0.3)
+
+        # STEP 5: Zoom into Card 2 (False Accept)
+        self.play(
+            card1.animate.set_opacity(0.2),
+            card3.animate.set_opacity(0.2),
+            card2.animate.set_opacity(1.0).scale(1.15).move_to(ORIGIN + UP * 0.3),
+            run_time=0.6
+        )
+        self.wait(0.4)
+
+        # Show score crossing threshold
+        score_bar2 = self.get_score_bar(0.81, card2)
+        self.add(score_bar2)
+        self.play(FadeIn(score_bar2), run_time=0.3)
+
+        threshold_line2 = Line(LEFT * 1.8, RIGHT * 1.8, stroke_color=RED, stroke_width=2)
+        threshold_line2.move_to(DOWN * 0.3)
+        threshold_label2 = Tex(r"\tau = 0.60", font_size=18, color=RED)
+        threshold_label2.next_to(threshold_line2, RIGHT, buff=0.2)
+        self.add(threshold_line2, threshold_label2)
+        self.play(Write(threshold_line2), Write(threshold_label2), run_time=0.3)
+
+        # Warning indicator
+        warning = Tex(r"!", font_size=48, color=RED)
+        warning.move_to(RIGHT * 1.8 + UP * 0.5)
+        self.play(Write(warning), run_time=0.3)
+
+        # Reveal False Accept label
+        fa_label = Tex(r"\textbf{False Accept}", font_size=32, color=RED)
+        fa_label.move_to(DOWN * 1.6)
+        fa_meaning = Tex(r"\text{The wrong person is accepted.}", font_size=20, color=MUTED)
+        fa_meaning.next_to(fa_label, DOWN, buff=0.15)
+        self.play(Write(fa_label), run_time=0.4)
+        self.play(Write(fa_meaning), run_time=0.3)
+        self.wait(0.5)
+
+        # Return to full layout
+        self.play(
+            FadeOut(score_bar2),
+            FadeOut(threshold_line2),
+            FadeOut(threshold_label2),
+            FadeOut(warning),
+            FadeOut(fa_label),
+            FadeOut(fa_meaning),
+            card2.animate.scale(1/1.15).move_to(DOWN * 0.5).set_opacity(0.4),
+            card1.animate.set_opacity(0.4),
+            card3.animate.set_opacity(0.4),
+            run_time=0.5
+        )
+        self.wait(0.3)
+
+        # STEP 6: Zoom into Card 3 (Identity Mismatch)
+        self.play(
+            card1.animate.set_opacity(0.2),
+            card2.animate.set_opacity(0.2),
+            card3.animate.set_opacity(1.0).scale(1.15).move_to(ORIGIN + UP * 0.3),
+            run_time=0.6
+        )
+        self.wait(0.4)
+
+        # Show ambiguous score
+        amb_score = Tex(r"s \approx \tau", font_size=24, color=YELLOW)
+        amb_score.move_to(DOWN * 0.5)
+        self.play(Write(amb_score), run_time=0.4)
+
+        # Reveal Identity Mismatch label
+        im_label = Tex(r"\textbf{Identity Mismatch}", font_size=32, color=YELLOW)
+        im_label.move_to(DOWN * 1.6)
+        im_meaning = Tex(r"\text{Selfie and document do not match clearly.}", font_size=20, color=MUTED)
+        im_meaning.next_to(im_label, DOWN, buff=0.15)
+        self.play(Write(im_label), run_time=0.4)
+        self.play(Write(im_meaning), run_time=0.3)
+        self.wait(0.5)
+
+        # STEP 7: Summary below all cards
+        self.play(
+            FadeOut(amb_score),
+            FadeOut(im_label),
+            FadeOut(im_meaning),
+            card1.animate.scale(1/1.15).move_to(LEFT * card_spacing + DOWN * 0.5).set_opacity(1.0),
+            card2.animate.scale(1/1.15).move_to(DOWN * 0.5).set_opacity(1.0),
+            card3.animate.scale(1/1.15).move_to(RIGHT * card_spacing + DOWN * 0.5).set_opacity(1.0),
+            run_time=0.5
+        )
+        self.wait(0.3)
+
+        # STEP 8: Compact summary
+        summary_line1 = Tex(r"\text{A small error in similarity}", font_size=24)
+        summary_arrow = Tex(r"\Downarrow", font_size=28, color=CYAN)
+        summary_line2 = Tex(r"\textbf{can become a large identity risk.}", font_size=28, color=RED)
+        
+        summary_line1.move_to(DOWN * 2.5)
+        summary_arrow.next_to(summary_line1, DOWN, buff=0.1)
+        summary_line2.next_to(summary_arrow, DOWN, buff=0.1)
+        
+        summary_group = VGroup(summary_line1, summary_arrow, summary_line2)
+        self.add(summary_group)
+        self.play(Write(summary_group), run_time=0.5)
+        self.wait(0.6)
+
+        # STEP 9: Final message
+        msg1 = Tex(r"\text{Recognition is not only about finding similar images.}", font_size=22)
+        msg2 = Tex(r"\text{It is about making reliable identity decisions.}", font_size=22, color=CYAN)
+        
+        msg1.move_to(DOWN * 3.6)
+        msg2.next_to(msg1, DOWN, buff=0.2)
+        
+        msg_group = VGroup(msg1, msg2)
+        self.add(msg_group)
+        self.play(Write(msg_group), run_time=0.5)
+        self.wait(0.8)
+
+        # STEP 10: Fade out all
+        fade_out_all = [title, all_cards, summary_group, msg_group]
+        self.play(*[FadeOut(obj) for obj in fade_out_all], run_time=0.5)
+        self.wait(0.3)
+
+    def create_false_reject_card(self, width, height):
+        """Create False Reject scenario card."""
+        card = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.15,
+            stroke_color=YELLOW,
+            stroke_width=2,
+            fill_color=PANEL,
+            fill_opacity=0.15
+        )
+        
+        # Title
+        card_title = Tex(r"\text{Smartphone Unlock}", font_size=22, color=WHITE)
+        card_title.move_to(card.get_center() + UP * 1.3)
+        
+        # Phone icon (simple rectangle with notch)
+        phone = RoundedRectangle(
+            width=1.2,
+            height=2.0,
+            corner_radius=0.15,
+            stroke_color=CYAN,
+            stroke_width=2,
+            fill_opacity=0
+        )
+        phone.move_to(card.get_center() + UP * 0.3)
+        
+        # Face inside phone
+        phone_face = Circle(radius=0.5, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
+        phone_face.move_to(phone.get_center() + UP * 0.3)
+        
+        # Lock icon
+        lock = Tex(r"\Lock{}", font_size=32, color=RED)
+        lock.move_to(phone.get_center() + DOWN * 0.5)
+        
+        # Score display
+        score_text = Tex(r"s = 0.42", font_size=18, color=MUTED)
+        score_text.move_to(card.get_center() + DOWN * 1.2)
+        
+        card_group = VGroup(card, card_title, phone, phone_face, lock, score_text)
+        return card_group
+
+    def create_false_accept_card(self, width, height):
+        """Create False Accept scenario card."""
+        card = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.15,
+            stroke_color=RED,
+            stroke_width=2,
+            fill_color=PANEL,
+            fill_opacity=0.15
+        )
+        
+        # Title
+        card_title = Tex(r"\text{Security Camera}", font_size=22, color=WHITE)
+        card_title.move_to(card.get_center() + UP * 1.3)
+        
+        # Camera icon (using existing helper)
+        camera = make_camera_icon()
+        camera.scale(1.5)
+        camera.move_to(card.get_center() + UP * 0.3)
+        
+        # Two face cards
+        face1 = Circle(radius=0.35, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
+        face1.move_to(card.get_center() + LEFT * 0.8 + DOWN * 0.4)
+        
+        face2 = Circle(radius=0.35, stroke_color=RED, stroke_width=2, fill_opacity=0)
+        face2.move_to(card.get_center() + RIGHT * 0.8 + DOWN * 0.4)
+        
+        # Comparison arrow
+        comp_arrow = Arrow(
+            face1.get_center() + RIGHT * 0.4,
+            face2.get_center() + LEFT * 0.4,
+            buff=0.05,
+            stroke_color=YELLOW,
+            stroke_width=1.5
+        )
+        
+        # Score display
+        score_text = Tex(r"s = 0.81", font_size=18, color=GREEN)
+        score_text.move_to(card.get_center() + DOWN * 1.2)
+        
+        card_group = VGroup(card, card_title, camera, face1, face2, comp_arrow, score_text)
+        return card_group
+
+    def create_identity_mismatch_card(self, width, height):
+        """Create Identity Mismatch scenario card."""
+        card = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.15,
+            stroke_color=YELLOW,
+            stroke_width=2,
+            fill_color=PANEL,
+            fill_opacity=0.15
+        )
+        
+        # Title
+        card_title = Tex(r"\text{eKYC Verification}", font_size=22, color=WHITE)
+        card_title.move_to(card.get_center() + UP * 1.3)
+        
+        # Selfie card
+        selfie_card = RoundedRectangle(
+            width=1.3,
+            height=1.5,
+            corner_radius=0.1,
+            stroke_color=CYAN,
+            stroke_width=1.5,
+            fill_color=PANEL,
+            fill_opacity=0.2
+        )
+        selfie_card.move_to(card.get_center() + LEFT * 0.9 + DOWN * 0.2)
+        
+        selfie_face = Circle(radius=0.4, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
+        selfie_face.move_to(selfie_card.get_center())
+        
+        selfie_label = Tex(r"\text{Selfie}", font_size=14, color=MUTED)
+        selfie_label.next_to(selfie_card, DOWN, buff=0.1)
+        
+        # Document card
+        doc_card = RoundedRectangle(
+            width=1.3,
+            height=1.5,
+            corner_radius=0.1,
+            stroke_color=CYAN,
+            stroke_width=1.5,
+            fill_color=PANEL,
+            fill_opacity=0.2
+        )
+        doc_card.move_to(card.get_center() + RIGHT * 0.9 + DOWN * 0.2)
+        
+        doc_face = Circle(radius=0.4, stroke_color=WHITE, stroke_width=1.5, fill_opacity=0)
+        doc_face.move_to(doc_card.get_center())
+        
+        doc_label = Tex(r"\text{Document}", font_size=14, color=MUTED)
+        doc_label.next_to(doc_card, DOWN, buff=0.1)
+        
+        # Question mark between cards
+        question = Tex(r"?", font_size=36, color=YELLOW)
+        question.move_to(card.get_center() + DOWN * 0.3)
+        
+        card_group = VGroup(
+            card, card_title,
+            selfie_card, selfie_face, selfie_label,
+            doc_card, doc_face, doc_label,
+            question
+        )
+        return card_group
+
+    def get_score_bar(self, score, card):
+        """Create a visual score bar based on similarity score."""
+        bar_width = 2.5
+        bar_height = 0.25
+        
+        # Background bar
+        bg_bar = Rectangle(
+            width=bar_width,
+            height=bar_height,
+            stroke_color=WHITE,
+            stroke_width=1,
+            fill_opacity=0
+        )
+        bg_bar.move_to(card.get_center() + DOWN * 1.0)
+        
+        # Filled portion based on score
+        fill_width = bar_width * score
+        fill_bar = Rectangle(
+            width=fill_width,
+            height=bar_height,
+            stroke_width=0,
+            fill_color=GREEN if score > 0.6 else YELLOW,
+            fill_opacity=0.7
+        )
+        fill_bar.move_to(bg_bar.get_center())
+        fill_bar.align_to(bg_bar, LEFT)
+        
+        # Score label
+        score_label = Tex(f"s = {score:.2f}", font_size=18)
+        score_label.next_to(bg_bar, DOWN, buff=0.1)
+        
+        return VGroup(bg_bar, fill_bar, score_label)
+
+    # =========================================================================
+    # BEAT 3: TRANSITION TO EMBEDDING SPACE
+    # =========================================================================
+
+    def beat_3_transition_to_embedding(self):
+        """
+        Beat 3: Transition from face images to embedding space visualization.
+        - Show face images
+        - Transform to glowing points
+        - Form clusters
+        - Reveal embedding space concept
+        """
+        # STEP 1: Show face images in grid
+        face_files = [
+            "face_1.png", "face_2.png", "face_3.png", "face_4.png",
+            "face_5.png", "face_6.png", "face_7.png", "face_8.png"
+        ]
+        
+        face_images = []
+        for i, f in enumerate(face_files):
+            path = asset_path(f)
+            if os.path.exists(path):
+                img = ImageMobject(path)
+                img.set_height(1.0)
+                
+                # Position in two rows
+                row = i // 4
+                col = i % 4
+                x = (col - 1.5) * 1.4
+                y = (0.5 - row) * 1.3
+                img.move_to(np.array([x, y, 0]))
+                face_images.append(img)
+                self.add(img)
+        
+        self.wait(0.3)
+        
+        # Fade in title
+        title = Tex(r"\text{Pixel values are unstable}", font_size=32, color=MUTED)
+        title.move_to(UP * 3.0)
+        self.add(title)
+        self.play(Write(title), run_time=0.4)
+        self.wait(0.5)
+
+        # STEP 2: Transform images to glowing points
+        points = []
+        for img in face_images:
+            center = img.get_center()
+            # Create glowing dot
+            dot = Dot(center, color=CYAN, radius=0.15)
+            
+            # Glow effect (larger transparent circle behind)
+            glow = Circle(radius=0.3, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
+            glow.move_to(center)
+            
+            points.append((img, dot, glow))
+        
+        # Animate transformation
+        for img, dot, glow in points:
+            self.play(
+                img.animate.set_opacity(0),
+                FadeIn(glow),
+                FadeIn(dot),
+                run_time=0.15
+            )
+        self.wait(0.3)
+
+        # STEP 3: Form two clusters
+        # Cluster 1: same identity (left side, cyan)
+        cluster1_positions = [
+            LEFT * 2.5 + UP * 0.8,
+            LEFT * 2.2 + UP * 0.2,
+            LEFT * 2.8 + DOWN * 0.3,
+            LEFT * 2.0 + DOWN * 0.6
+        ]
+        
+        # Cluster 2: different identities (right side, orange)
+        cluster2_positions = [
+            RIGHT * 2.5 + UP * 0.6,
+            RIGHT * 2.2 + UP * 0.1,
+            RIGHT * 2.8 + DOWN * 0.2,
+            RIGHT * 2.0 + DOWN * 0.5
+        ]
+        
+        # Move first 4 points to cluster 1
+        for i, (img, dot, glow) in enumerate(points[:4]):
+            if i < len(cluster1_positions):
+                self.play(
+                    dot.animate.move_to(cluster1_positions[i]),
+                    glow.animate.move_to(cluster1_positions[i]),
+                    run_time=0.5
+                )
+        
+        # Move remaining points to cluster 2
+        for i, (img, dot, glow) in enumerate(points[4:8]):
+            if i < len(cluster2_positions):
+                self.play(
+                    dot.animate.move_to(cluster2_positions[i]),
+                    glow.animate.move_to(cluster2_positions[i]),
+                    run_time=0.5
+                )
+        
+        self.wait(0.4)
+
+        # STEP 4: Draw cluster circles
+        cluster1_center = np.mean(cluster1_positions, axis=0)
+        cluster2_center = np.mean(cluster2_positions, axis=0)
+        
+        cluster1_circle = Circle(
+            radius=1.0,
+            stroke_color=CYAN,
+            stroke_width=2,
+            fill_color=CYAN,
+            fill_opacity=0.05
+        )
+        cluster1_circle.move_to(cluster1_center)
+        
+        cluster2_circle = Circle(
+            radius=1.0,
+            stroke_color="#CC8855",
+            stroke_width=2,
+            fill_color="#CC8855",
+            fill_opacity=0.05
+        )
+        cluster2_circle.move_to(cluster2_center)
+        
+        self.play(FadeIn(cluster1_circle), FadeIn(cluster2_circle), run_time=0.4)
+        self.wait(0.3)
+
+        # Cluster labels
+        cluster1_label = Tex(r"\text{Same Identity}", font_size=20, color=CYAN)
+        cluster1_label.move_to(cluster1_center + DOWN * 1.2)
+        
+        cluster2_label = Tex(r"\text{Different Identities}", font_size=20, color="#CC8855")
+        cluster2_label.move_to(cluster2_center + DOWN * 1.2)
+        
+        self.play(Write(cluster1_label), Write(cluster2_label), run_time=0.4)
+        self.wait(0.4)
+
+        # STEP 5: Message cascade
+        # Fade out title and update
+        self.play(FadeOut(title), run_time=0.3)
+        
+        msg1 = Tex(r"\text{Pixel values are unstable}", font_size=26, color=MUTED)
+        msg1.move_to(UP * 3.0)
+        self.add(msg1)
+        self.play(Write(msg1), run_time=0.4)
+        self.wait(0.5)
+
+        # Arrow down
+        arrow1 = Tex(r"\downarrow", font_size=28, color=WHITE)
+        arrow1.move_to(UP * 2.5)
+        self.add(arrow1)
+        self.play(Write(arrow1), run_time=0.3)
+        self.wait(0.3)
+
+        # Message 2
+        msg2 = Tex(r"\text{We need a better representation}", font_size=26, color=WHITE)
+        msg2.move_to(UP * 2.0)
+        self.add(msg2)
+        self.play(Write(msg2), run_time=0.4)
+        self.wait(0.5)
+
+        # Arrow down
+        arrow2 = Tex(r"\downarrow", font_size=28, color=WHITE)
+        arrow2.move_to(UP * 1.5)
+        self.add(arrow2)
+        self.play(Write(arrow2), run_time=0.3)
+        self.wait(0.3)
+
+        # Message 3 - Embedding Space
+        msg3 = Tex(r"\textbf{Embedding Space}", font_size=36, color=CYAN)
+        msg3.move_to(UP * 1.0)
+        self.add(msg3)
+        self.play(Write(msg3), run_time=0.5)
+        self.wait(0.8)
+
+        # STEP 6: Fade out everything except final frame
+        fade_out_elements = [
+            cluster1_circle, cluster2_circle,
+            cluster1_label, cluster2_label,
+            msg1, arrow1, msg2, arrow2
+        ]
+        for img, dot, glow in points:
+            fade_out_elements.extend([img, dot, glow])
+        
+        self.play(*[FadeOut(obj) for obj in fade_out_elements], run_time=0.6)
+        self.wait(0.3)
+
+        # STEP 7: Final frame - only Embedding Space
+        self.play(FadeOut(msg3), run_time=0.3)
+        
+        final_title = Tex(r"\textbf{Embedding Space}", font_size=56, color=CYAN)
+        final_title.center()
+        self.add(final_title)
+        self.play(Write(final_title), run_time=0.6)
+        self.wait(1.0)
+
+        # Fade out final title
+        self.play(FadeOut(final_title), run_time=0.5)
         self.wait(0.3)
 
     # =========================================================================
