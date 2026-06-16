@@ -199,30 +199,93 @@ manimgl scenes/<scene_file>.py <SceneClass> -w -q <quality>
 | `h` | High (1080p) |
 | `p` | Production |
 
-### All Scenes
+# Preview (display in window, no file saved)
+python3 -m manimlib scenes/scene00_introduction.py Scene00Introduction
 
-```bash
-# Scene 00 - Introduction
-manimgl scenes/scene00_introduction.py Scene00Introduction -w
+# Render and save video (default: 720p)
+python3 -m manimlib -w scenes/scene00_introduction.py Scene00Introduction
 
-# Scene 01 - Human vs Computer
-manimgl scenes/scene01_human_vs_computer.py Scene01_HumanVsComputer -w
+# Render 480p (fast, for testing)
+python3 -m manimlib -w -l scenes/scene00_introduction.py Scene00Introduction
 
-# Scene 02 - Face Recognition Pipeline
-manimgl scenes/scene02_face_recognition_pipeline.py Scene02_FaceRecognitionPipeline -w
+# Render 720p
+python3 -m manimlib -w -m scenes/scene00_introduction.py Scene00Introduction
 
-# Scene 03 - Challenges
-manimgl scenes/scene03_challenges.py Scene03_Challenges -w
+# Render 1080p (recommended for final output)
+python3 -m manimlib -w --hd scenes/scene00_introduction.py Scene00Introduction
+
+# Render 4K (ultra high quality)
+python3 -m manimlib -w --uhd scenes/scene00_introduction.py Scene00Introduction
+
+# Presenter mode (wait for spacebar between animations)
+python3 -m manimlib -p scenes/scene00_introduction.py Scene00Introduction
+
+# Save final frame only (fast testing)
+python3 -m manimlib -s scenes/scene00_introduction.py Scene00Introduction
+
+# Export as GIF
+python3 -m manimlib -i scenes/scene00_introduction.py Scene00Introduction
+
+# Start from animation N (e.g., animation 5)
+python3 -m manimlib -w -n 5 scenes/scene00_introduction.py Scene00Introduction
+
+# Custom resolution (e.g., 720)
+python3 -m manimlib -w -r 720 scenes/scene00_introduction.py Scene00Introduction
+
+# Custom FPS
+python3 -m manimlib -w --fps 30 scenes/scene00_introduction.py Scene00Introduction
+
+# List all scenes in a file
+python3 -m manimlib scenes/scene00_introduction.py
+
+# Using venv
+cd /home/hg/source/manim-arcface-2
+source venv/bin/activate
+python -m manimlib -w scenes/scene00_introduction.py Scene00Introduction
 ```
+
+### Choosing Video Quality
+
+| Quality | Resolution | Use Case | Render Time |
+|---------|-----------|----------|-------------|
+| **480p** (`-l`) | 854×480 | Quick testing, draft review | ~1x |
+| **720p** (`-m`) | 1280×720 | Preview, internal review | ~2x |
+| **1080p** (`--hd`) | 1920×1080 | **Recommended for final output** | ~4x |
+| **4K** (`--uhd`) | 3840×2160 | Maximum quality, large displays | ~8x+ |
+
+**Recommendations:**
+- **Development/Testing**: Use `-l` (480p) for fast iteration during coding
+- **Review**: Use `-m` (720p) for scene-by-scene review
+- **Final Output**: Use `--hd` (1080p) for YouTube/presentations
+- **4K**: Only for large displays or if you have powerful GPU
+
+### Video Output Directory
+
+Rendered videos are saved in:
+```
+videos/<SceneClass>/
+└── <Quality>/
+    └── <SceneClass>.mp4
+```
+
+Example: `videos/Scene00Introduction/480p15/Scene00Introduction.mp4`
 
 ### Useful Flags
 
 | Flag | Description |
 |------|-------------|
-| `-w` | Write to file |
-| `-s` | Preview only (skip to end) |
+| `-w` | Write to file (save video) |
+| `-s` | Save final frame only (no animation) |
 | `-n <num>` | Start at animation number |
 | `-o` | Write and open result |
+| `-p` | Presenter mode |
+| `-l` | Low quality (480p) |
+| `-m` | Medium quality (720p) |
+| `--hd` | High quality (1080p) |
+| `--uhd` | Ultra high quality (4K) |
+| `-r <px>` | Custom resolution |
+| `--fps <n>` | Custom FPS |
+| `-i` | Export as GIF |
 
 ---
 
