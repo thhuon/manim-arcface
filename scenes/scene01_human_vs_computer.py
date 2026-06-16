@@ -17,7 +17,7 @@ class Scene01_HumanVsComputer(Scene):
     """
 
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
         # ─────────────────────────────────────────────────────────────────────
         # BEAT 1 — Human recognition (static camera, no movement)
@@ -141,9 +141,9 @@ class Scene01_HumanVsComputer(Scene):
         line1 = Tex(r"\textbf{Face Recognition Pipeline}", font_size=54)
         line2 = Tex(
             r"\text{What happens when we look into a camera?}",
-            font_size=28,
+            size=28,
+            color=MUTED
         )
-        line2.set_color("#cccccc")
 
         title_block = VGroup(line1, line2)
         title_block.arrange(DOWN, buff=0.35)

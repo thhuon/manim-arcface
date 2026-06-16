@@ -7,7 +7,7 @@ from scenes.utils import *
 # SCENE-SPECIFIC HELPERS - For scene04_EmbeddingSpace
 # =============================================================================
 
-ACCENT = "#4A7DFF"
+# PURPLE added here for embedding space visualization (not in main palette)
 PURPLE = "#A855F7"
 
 

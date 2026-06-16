@@ -14,15 +14,30 @@ import os
 
 # =============================================================================
 # COLOR PALETTE - Consistent throughout all scenes
+# Based on 3Blue1Brown cinematic dark theme
 # =============================================================================
 
-CYAN = "#00D4FF"
-BLUE = "#4A7DFF"
-WHITE = "#F2F6FF"
-MUTED = "#8A94A6"
-DARK = "#0A0E14"
-PANEL = "#101722"
-GREEN = "#3EF7A0"
+# --- Background Colors ---
+DARK = "#090D14"       # Deep navy black - main background
+PANEL = "#101722"      # Slightly lighter panel backgrounds
+
+# --- Primary Accent Colors ---
+CYAN = "#00D4FF"      # Electric cyan - primary highlight, pipeline stages, active elements
+GREEN = "#3EF7A0"     # Mint green - success, identity confirmed, matching
+BLUE = "#4A7DFF"      # Royal blue - secondary accent, database elements
+
+# --- Neutral Colors ---
+WHITE = "#FFFFFF"     # Soft white - main text, active elements
+MUTED = "#8A94A6"     # Slate gray - secondary text, labels, inactive elements
+
+# --- Semantic Colors ---
+RED = "#FF4757"        # Vibrant red - danger, false accept, errors, warnings
+YELLOW = "#FFD43B"    # Warm yellow - caution, false reject, identity mismatch
+ORANGE = "#FF9F43"    # Warm orange - highlights, accent variation
+SHADOW = "#CC8855"    # Muted terracotta - cluster 2, secondary differentiation
+
+# --- Legacy Aliases ---
+ACCENT = CYAN          # Alias for ACCENT (used in scene03)
 
 
 # =============================================================================

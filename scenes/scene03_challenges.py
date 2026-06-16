@@ -7,7 +7,7 @@ from scenes.utils import *
 # SCENE-SPECIFIC HELPERS - For scene03_Challenges
 # =============================================================================
 
-ACCENT = "#4A7DFF"
+# scene03 imports colors from scenes/utils.py
 
 def get_face_image(filename: str, height: float = 1.0):
     """Load face image with consistent styling."""
@@ -414,7 +414,7 @@ class Scene03_Challenges(Scene):
         # Create colored dots to represent each face
         dot_a = Dot(point_a_pos, color=CYAN, radius=0.12)
         dot_b = Dot(point_b_pos, color=CYAN, radius=0.12)
-        dot_c = Dot(point_c_pos, color="#CC8855", radius=0.12)
+        dot_c = Dot(point_c_pos, color=SHADOW, radius=0.12)
 
         # Labels for each point
         point_label_a = Tex(r"A", font_size=22)
@@ -455,7 +455,7 @@ class Scene03_Challenges(Scene):
         dist_ab_label.move_to((point_a_pos + point_b_pos) / 2 + DOWN * 0.4)
         dist_ab_label.shift(RIGHT * 0.5)
 
-        dist_ac_label = Tex(r"\text{different identity, smaller pixel distance}", font_size=18, color="#CC8855")
+        dist_ac_label = Tex(r"\text{different identity, smaller pixel distance}", font_size=18, color=SHADOW)
         dist_ac_label.move_to((point_a_pos + point_c_pos) / 2 + UP * 0.35)
 
         self.play(Write(dist_ab_label), Write(dist_ac_label), run_time=0.4)
@@ -549,7 +549,7 @@ class Scene03_Challenges(Scene):
         # Create new dots at desired positions
         new_dot_a = Dot(new_pos_a, color=CYAN, radius=0.12)
         new_dot_b = Dot(new_pos_b, color=CYAN, radius=0.12)
-        new_dot_c = Dot(new_pos_c, color="#CC8855", radius=0.12)
+        new_dot_c = Dot(new_pos_c, color=SHADOW, radius=0.12)
 
         # Labels for new dots
         new_label_a = Tex(r"A", font_size=20)
@@ -583,8 +583,8 @@ class Scene03_Challenges(Scene):
         # -------------------------------------------------------------------------
         # Draw solid lines showing relationships in identity-aware space
         new_line_ab = Line(new_pos_a, new_pos_b, stroke_color=CYAN, stroke_width=2.0)  # A-B: close
-        new_line_ac = Line(new_pos_a, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)  # A-C: far
-        new_line_bc = Line(new_pos_b, new_pos_c, stroke_color="#CC8855", stroke_width=2.0)  # B-C: far
+        new_line_ac = Line(new_pos_a, new_pos_c, stroke_color=SHADOW, stroke_width=2.0)  # A-C: far
+        new_line_bc = Line(new_pos_b, new_pos_c, stroke_color=SHADOW, stroke_width=2.0)  # B-C: far
 
         self.play(Write(new_line_ab), Write(new_line_ac), Write(new_line_bc), run_time=0.4)
 
@@ -599,7 +599,7 @@ class Scene03_Challenges(Scene):
             center_ab + RIGHT * 0.5,
             new_pos_c + LEFT * 0.5,
             buff=0.1,
-            stroke_color="#CC8855",
+            stroke_color=SHADOW,
             stroke_width=2.0
         )
         self.play(Write(separation_arrow), run_time=0.3)
@@ -616,10 +616,10 @@ class Scene03_Challenges(Scene):
         same_identity_group.move_to(DOWN * 3.5 + LEFT * 2.5)
 
         # Label for different identities → far apart
-        different_label = Tex(r"\text{different identities}", font_size=20, color="#CC8855")
-        different_arrow = Tex(r"\rightarrow", font_size=20, color="#CC8855")
+        different_label = Tex(r"\text{different identities}", font_size=20, color=SHADOW)
+        different_arrow = Tex(r"\rightarrow", font_size=20, color=SHADOW)
         different_arrow.next_to(different_label, RIGHT, buff=0.1)
-        far_word = Tex(r"\text{far apart}", font_size=20, color="#CC8855")
+        far_word = Tex(r"\text{far apart}", font_size=20, color=SHADOW)
         far_word.next_to(different_arrow, RIGHT, buff=0.1)
 
         different_identity_group = VGroup(different_label, different_arrow, far_word)
@@ -1611,9 +1611,9 @@ class Scene03_Challenges(Scene):
         
         cluster2_circle = Circle(
             radius=1.0,
-            stroke_color="#CC8855",
+            stroke_color=SHADOW,
             stroke_width=2,
-            fill_color="#CC8855",
+            fill_color=SHADOW,
             fill_opacity=0.05
         )
         cluster2_circle.move_to(cluster2_center)
@@ -1625,7 +1625,7 @@ class Scene03_Challenges(Scene):
         cluster1_label = Tex(r"\text{Same Identity}", font_size=20, color=CYAN)
         cluster1_label.move_to(cluster1_center + DOWN * 1.2)
         
-        cluster2_label = Tex(r"\text{Different Identities}", font_size=20, color="#CC8855")
+        cluster2_label = Tex(r"\text{Different Identities}", font_size=20, color=SHADOW)
         cluster2_label.move_to(cluster2_center + DOWN * 1.2)
         
         self.play(Write(cluster1_label), Write(cluster2_label), run_time=0.4)

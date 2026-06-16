@@ -35,7 +35,7 @@ class Scene00Introduction(Scene):
     """
 
     def construct(self):
-        self.camera.background_color = "#111111"
+        self.camera.background_color = DARK
 
         # ── STEP 1: Asset Loading & Proportional Scaling ──────────────────────
 
@@ -54,7 +54,7 @@ class Scene00Introduction(Scene):
         center_arrow = Arrow(LEFT, RIGHT, stroke_color=WHITE, stroke_width=4)
         center_arrow.scale(1.6)
 
-        face_id_label = Tex(r"\text{FaceID}", font_size=36, color=WHITE)
+        face_id_label = latex(r"\text{FaceID}", size=36)
         face_id_label.next_to(center_arrow, UP, buff=0.3)
 
         center_group = VGroup(center_arrow, face_id_label)
@@ -73,8 +73,8 @@ class Scene00Introduction(Scene):
 
         # ── STEP 3: Title Block (Sub-Screen 2) ─────────────────────────────
 
-        line1 = Tex(r"\textbf{Understanding ArcFace}", font_size=72, color=WHITE)
-        line2 = Tex(r"\text{The Geometry of Face Recognition}", font_size=32, color="#cccccc")
+        line1 = latex(r"\textbf{Understanding ArcFace}", size=72)
+        line2 = latex(r"\text{The Geometry of Face Recognition}", size=32, color=MUTED)
         title_block = VGroup(line1, line2)
         title_block.arrange(DOWN, buff=0.4)
         title_block.move_to(ORIGIN)
