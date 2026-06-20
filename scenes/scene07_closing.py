@@ -3,7 +3,7 @@ from scenes.utils import *
 
 
 # =============================================================================
-# SCENE 08 — Closing
+# SCENE 07 - Closing
 # =============================================================================
 
 
@@ -97,7 +97,7 @@ def beat_2_closing(scene):
 # =============================================================================
 # MAIN SCENE: plays all beats in sequence
 # =============================================================================
-class Scene08_Closing(Scene):
+class Scene07_Closing(Scene):
     def construct(self):
         beat_1_applications(self)
         self.clear()

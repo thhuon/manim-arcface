@@ -2,11 +2,18 @@ from manimlib import *
 from scenes.utils import *
 
 
-# =============================================================================
-# SCENE 06 — ArcFace Core
-# =============================================================================
 
-
+# =============================================================================
+# SCENE 06 - ArcFace Mechanism
+# Implements Scene 6 (ArcFace Mechanism) per PLAN.md:
+# - Beat 1: ArcFace Formula
+# - Beat 2: Why Angular Distance
+# - Beat 3: 2D Comparison
+# - Beat 4: Angular Margin Geometric View
+# - Beat 5: Normalisation
+# - Beat 6: Formula Step by Step
+# - Beat 7: Boundary Shift
+# - Beat 8: Hypersphere Embedding Space
 # =============================================================================
 # BEAT 1: ArcFace Formula Introduction
 # =============================================================================
@@ -26,7 +33,7 @@ def beat_1_arcface_intro(scene):
     )
     formula.move_to(UP * 0.5)
     scene.play(Write(formula), run_time=3.5)
-    scene.wait(5.0)
+    scene.wait(3.0)
 
     highlights = [
         (r"m = 0.5", r"\text{Angular margin (radians)}", YELLOW),
@@ -43,10 +50,10 @@ def beat_1_arcface_intro(scene):
         row.next_to(formula.get_bottom(), DOWN, buff=0.3)
         row.shift(y_offset)
         scene.play(FadeIn(row, shift=UP * 0.1), run_time=1.0)
-        scene.wait(4.0)
+        scene.wait(2.0)
         y_offset += DOWN * 0.9
 
-    scene.wait(10.0)
+    scene.wait(3.0)
 
 
 # =============================================================================
@@ -60,7 +67,6 @@ def beat_2_why_angular_distance(scene):
     title.to_edge(UP, buff=0.5)
     scene.play(Write(title), run_time=2.0)
 
-    # ── Euclidean vs angular on a circle ────────────────────────────────────
     circle = Circle(radius=2.5, stroke_color=CYAN, stroke_width=2, fill_opacity=0)
     circle.shift(DOWN * 0.5)
     center = circle.get_center()
@@ -90,7 +96,7 @@ def beat_2_why_angular_distance(scene):
     euc_lbl = Tex(r"\text{Euclidean: ignores direction}", font_size=22, color=MUTED)
     euc_lbl.next_to(euc_line.get_center(), DOWN, buff=0.2)
     scene.play(ShowCreation(euc_line), Write(euc_lbl), run_time=1.5)
-    scene.wait(6.0)
+    scene.wait(2.0)
 
     arc_angle = Arc(radius=0.9, start_angle=angle_a, angle=angle_b - angle_a,
                     stroke_color=GREEN, stroke_width=2.5)
@@ -108,9 +114,9 @@ def beat_2_why_angular_distance(scene):
     ang_lbl = Tex(r"\cos\theta \text{ — scale-invariant angular distance}", font_size=22, color=GREEN)
     ang_lbl.to_edge(DOWN, buff=0.5)
     scene.play(Write(ang_lbl), run_time=1.5)
-    scene.wait(12.0)
+    scene.wait(3.0)
 
-    # ── L2 Normalisation makes magnitude irrelevant ──────────────────────────
+    # L2 Normalisation
     scene.play(FadeOut(euc_line), FadeOut(euc_lbl), FadeOut(ang_lbl), run_time=0.8)
 
     norm_title = Tex(r"\text{After L2 Normalisation: only direction matters}", font_size=28, color=CYAN)
@@ -126,7 +132,7 @@ def beat_2_why_angular_distance(scene):
 
     scene.play(ShowCreation(vec1), ShowCreation(vec2), run_time=1.5)
     scene.play(Write(same_dir), run_time=2.0)
-    scene.wait(25.0)
+    scene.wait(5.0)
 
 
 # =============================================================================
@@ -186,14 +192,14 @@ def beat_3_2d_visual_comparison(scene):
                             stroke_width=1.0 + i * 1.0, dash_length=0.12)
             scene.add(bl)
 
-    scene.wait(3.0)
+    scene.wait(2.0)
 
     caption_l = Tex(r"\text{Fuzzy boundaries}", font_size=22, color=MUTED)
     caption_l.next_to(circle_l, DOWN, buff=0.3)
     caption_r = Tex(r"\text{Clear angular margins}", font_size=22, color=CYAN)
     caption_r.next_to(circle_r, DOWN, buff=0.3)
     scene.play(Write(caption_l), Write(caption_r), run_time=1.5)
-    scene.wait(35.0)
+    scene.wait(5.0)
 
 
 # =============================================================================
@@ -234,7 +240,7 @@ def beat_4_angular_margin(scene):
     mid = (w_angle + theta) / 2
     theta_lbl.move_to(center + 1.0 * np.array([np.cos(mid), np.sin(mid), 0]))
     scene.play(ShowCreation(arc_theta), Write(theta_lbl), run_time=1.2)
-    scene.wait(5.0)
+    scene.wait(2.0)
 
     m = 0.5
     arc_margin = Arc(radius=0.5, start_angle=theta, angle=m,
@@ -251,7 +257,7 @@ def beat_4_angular_margin(scene):
     )
     constraint.to_edge(DOWN, buff=0.5)
     scene.play(Write(constraint), run_time=1.5)
-    scene.wait(18.0)
+    scene.wait(4.0)
 
 
 # =============================================================================
@@ -290,7 +296,7 @@ def beat_5_normalisation(scene):
     )
     problem_text.to_edge(DOWN, buff=0.5)
     scene.play(Write(problem_text), run_time=1.5)
-    scene.wait(8.0)
+    scene.wait(2.0)
 
     scene.play(FadeOut(arrows_grp), FadeOut(no_norm_lbl), FadeOut(problem_text),
                FadeOut(ax), run_time=0.8)
@@ -318,7 +324,7 @@ def beat_5_normalisation(scene):
     )
     conclusion.to_edge(DOWN, buff=0.5)
     scene.play(Write(conclusion), run_time=2.0)
-    scene.wait(15.0)
+    scene.wait(4.0)
 
 
 # =============================================================================
@@ -335,17 +341,17 @@ def beat_6_formula_steps(scene):
     step1 = Tex(r"\text{Step 1: } W_{y_i}^T f_i = \cos\theta_{y_i}", font_size=32, color=MUTED)
     step1.shift(UP * 1.5)
     scene.play(Write(step1), run_time=2.0)
-    scene.wait(5.0)
+    scene.wait(2.0)
 
     step2 = Tex(r"\text{Step 2: } \cos(\theta_{y_i} + m) \;\leftarrow\;\text{add margin }m", font_size=32, color=CYAN)
     step2.next_to(step1, DOWN, buff=0.6)
     scene.play(Write(step2), run_time=2.0)
-    scene.wait(5.0)
+    scene.wait(2.0)
 
     step3 = Tex(r"\text{Step 3: Multiply by scale } s", font_size=32, color=GREEN)
     step3.next_to(step2, DOWN, buff=0.6)
     scene.play(Write(step3), run_time=2.0)
-    scene.wait(5.0)
+    scene.wait(2.0)
 
     full = Tex(
         r"L = -\log\frac{e^{s\cos(\theta_{y_i}+m)}}{e^{s\cos(\theta_{y_i}+m)} + \sum_{j\neq y_i}e^{s\cos\theta_j}}",
@@ -362,7 +368,7 @@ def beat_6_formula_steps(scene):
     )
     insight.to_edge(DOWN, buff=0.5)
     scene.play(Write(insight), run_time=2.0)
-    scene.wait(15.0)
+    scene.wait(4.0)
 
 
 # =============================================================================
@@ -395,7 +401,7 @@ def beat_7_boundary_shift(scene):
     old_label = Tex(r"\text{Softmax boundary}", font_size=20, color=MUTED)
     old_label.next_to(old_b1, UP, buff=0.1)
     scene.play(ShowCreation(old_boundary), Write(old_label), run_time=1.2)
-    scene.wait(4.0)
+    scene.wait(2.0)
 
     m = 0.5
     new_boundary_angle = w_angle + PI / 2 - m
@@ -420,7 +426,7 @@ def beat_7_boundary_shift(scene):
     )
     caption.to_edge(DOWN, buff=0.5)
     scene.play(Write(caption), run_time=2.0)
-    scene.wait(12.0)
+    scene.wait(3.0)
 
 
 # =============================================================================
@@ -460,7 +466,7 @@ def beat_8_hypersphere(scene):
             all_dots.add(d)
 
     scene.play(ShowCreation(all_dots), run_time=2.0)
-    scene.wait(15.0)
+    scene.wait(3.0)
 
     scene.play(scene.camera.frame.animate.scale(0.6).move_to(center + LEFT * 0.2), run_time=2.0)
 
@@ -479,7 +485,7 @@ def beat_8_hypersphere(scene):
 
     scene.play(ShowCreation(line_a), ShowCreation(line_b), run_time=1.0)
     scene.play(ShowCreation(arc_theta), Write(theta_lbl), run_time=1.0)
-    scene.wait(18.0)
+    scene.wait(3.0)
 
     scene.play(scene.camera.frame.animate.scale(1 / 0.6).move_to(ORIGIN), run_time=2.0)
 
@@ -489,13 +495,18 @@ def beat_8_hypersphere(scene):
     )
     projection_label.to_edge(DOWN, buff=0.5)
     scene.play(FadeOut(r_label), Write(projection_label), run_time=1.5)
-    scene.wait(25.0)
+    scene.wait(4.0)
 
 
 # =============================================================================
 # MAIN SCENE: plays all beats in sequence
 # =============================================================================
-class Scene06_ArcFaceCore(Scene):
+
+
+# =============================================================================
+# MAIN SCENE
+# =============================================================================
+class Scene06_ArcFaceMechanism(Scene):
     def construct(self):
         beat_1_arcface_intro(self)
         self.clear()

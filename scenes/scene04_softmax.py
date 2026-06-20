@@ -3,10 +3,118 @@ from scenes.utils import *
 
 
 # =============================================================================
-# BEAT 1: Loss Function Introduction
+# SCENE 04 - Softmax
+# Implements Scene 4 (Softmax) per PLAN.md:
+# - Part A: Embedding Space Transition (PLAN.md Scene 3 / Beat E — bridge)
+# - Part B: Loss Function Introduction
+# - Part C: How Softmax Works
+# - Part D: Softmax Limitations
 # =============================================================================
-def beat_1_softmax_intro(scene):
-    """Softmax formula + geometric intuition."""
+
+PURPLE = "#A855F7"
+
+
+# =============================================================================
+# PART A: Embedding Space Transition (Scene 3 Beat E — bridge to Softmax)
+# =============================================================================
+def part_a_embedding_transition(scene):
+    """Arrow transition to Embedding Space."""
+    scene.camera.background_color = DARK
+
+    # Clean background
+    plane = Rectangle(
+        width=8, height=5,
+        fill_opacity=0, stroke_color=MUTED, stroke_width=1
+    )
+    plane.move_to(ORIGIN)
+    scene.play(ShowCreation(plane), run_time=1.0)
+
+    # Create embedding clusters
+    np.random.seed(42)
+
+    def make_cluster(center, color, n=5):
+        dots = VGroup()
+        for _ in range(n):
+            d = Dot(
+                radius=0.12,
+                color=color
+            )
+            offset = np.array([np.random.uniform(-0.6, 0.6),
+                              np.random.uniform(-0.6, 0.6), 0])
+            d.move_to(center + offset)
+            dots.add(d)
+        return dots
+
+    cluster_a_center = np.array([-2.5, 0.5, 0])
+    cluster_b_center = np.array([0.5, 0.5, 0])
+    cluster_c_center = np.array([2.5, -0.5, 0])
+
+    dots_a = make_cluster(cluster_a_center, CYAN)
+    dots_b = make_cluster(cluster_b_center, GREEN)
+    dots_c = make_cluster(cluster_c_center, ORANGE)
+
+    ell_a = Circle(radius=1.0, stroke_color=CYAN, stroke_width=1.5, fill_opacity=0)
+    ell_a.move_to(cluster_a_center)
+    ell_b = Circle(radius=1.0, stroke_color=GREEN, stroke_width=1.5, fill_opacity=0)
+    ell_b.move_to(cluster_b_center)
+    ell_c = Circle(radius=1.0, stroke_color=ORANGE, stroke_width=1.5, fill_opacity=0)
+    ell_c.move_to(cluster_c_center)
+
+    lbl_a = Tex(r"\text{Person A}", font_size=20, color=CYAN)
+    lbl_a.next_to(ell_a, DOWN, buff=0.2)
+    lbl_b = Tex(r"\text{Person B}", font_size=20, color=GREEN)
+    lbl_b.next_to(ell_b, DOWN, buff=0.2)
+    lbl_c = Tex(r"\text{Person C}", font_size=20, color=ORANGE)
+    lbl_c.next_to(ell_c, DOWN, buff=0.2)
+
+    scene.play(
+        FadeIn(ell_a), FadeIn(ell_b), FadeIn(ell_c),
+        run_time=0.5
+    )
+    scene.play(
+        LaggedStart(*[FadeIn(d) for d in dots_a], lag_ratio=0.1),
+        LaggedStart(*[FadeIn(d) for d in dots_b], lag_ratio=0.1),
+        LaggedStart(*[FadeIn(d) for d in dots_c], lag_ratio=0.1),
+        run_time=1.0
+    )
+    scene.play(
+        Write(lbl_a), Write(lbl_b), Write(lbl_c),
+        run_time=0.5
+    )
+
+    # Title
+    title = Tex(r"\textbf{Embedding Space}", font_size=52, color=CYAN)
+    title.move_to(UP * 3.2)
+    scene.play(Write(title), run_time=1.5)
+    scene.wait(1.0)
+
+    # Arrow label
+    arrow_note = Tex(r"\text{Entering: Embedding Space}", font_size=28, color=MUTED)
+    arrow_note.to_edge(DOWN, buff=0.8)
+    scene.play(Write(arrow_note), run_time=1.0)
+    scene.wait(3.0)
+
+    # Particle dissolve to Softmax
+    particles = VGroup(*[Dot(radius=0.04, color=CYAN) for _ in range(60)])
+    all_dots = VGroup(dots_a, dots_b, dots_c)
+    particles.move_to(all_dots.get_center())
+    scene.play(
+        FadeOut(all_dots),
+        FadeOut(ell_a), FadeOut(ell_b), FadeOut(ell_c),
+        FadeOut(lbl_a), FadeOut(lbl_b), FadeOut(lbl_c),
+        FadeOut(plane),
+        run_time=0.6
+    )
+    scene.play(*[FadeIn(p) for p in particles], run_time=0.4)
+    scene.wait(0.5)
+    scene.play(*[FadeOut(p) for p in particles], run_time=0.4)
+
+
+# =============================================================================
+# PART B: Softmax Introduction (PLAN.md Scene 9 / Beat A)
+# =============================================================================
+def part_b_softmax_intro(scene):
+    """Loss function introduction + Softmax formula."""
     scene.camera.background_color = DARK
 
     title = Tex(r"\text{Softmax Loss Function}", font_size=52, color=WHITE)
@@ -37,7 +145,7 @@ def beat_1_softmax_intro(scene):
 
     for row in explanation:
         scene.play(FadeIn(row, shift=RIGHT * 0.1), run_time=0.9)
-    scene.wait(10.0)
+    scene.wait(2.0)
 
     intuition = Tex(
         r"\text{Softmax pushes embedding } f_i \text{ toward weight } W_{y_i}",
@@ -45,13 +153,13 @@ def beat_1_softmax_intro(scene):
     )
     intuition.to_edge(DOWN, buff=0.5)
     scene.play(Write(intuition), run_time=2.0)
-    scene.wait(15.0)
+    scene.wait(3.0)
 
 
 # =============================================================================
-# BEAT 2: How Softmax Works
+# PART C: Softmax Concept (PLAN.md Scene 9 / Beat B)
 # =============================================================================
-def beat_2_softmax_concept(scene):
+def part_c_softmax_concept(scene):
     """Embedding space with weight vectors, movement, and decision boundaries."""
     scene.camera.background_color = DARK
 
@@ -59,7 +167,7 @@ def beat_2_softmax_concept(scene):
     title.to_edge(UP, buff=0.5)
     scene.play(Write(title), run_time=2.0)
 
-    # --- Embedding space with weight vectors ---
+    # Embedding space with weight vectors
     ax = Axes(
         x_range=[-3.5, 3.5, 1], y_range=[-3.0, 3.0, 1],
         width=6.5, height=5,
@@ -89,9 +197,8 @@ def beat_2_softmax_concept(scene):
     w_caption = Tex(r"\text{Class weight vectors } W_j", font_size=26, color=WHITE)
     w_caption.to_edge(DOWN, buff=0.5)
     scene.play(Write(w_caption), run_time=1.5)
-    scene.wait(10.0)
+    scene.wait(2.0)
 
-    # --- Embedding moves toward its class weight ---
     scene.play(FadeOut(w_caption), run_time=0.5)
 
     emb = Dot(radius=0.14, color=WHITE)
@@ -112,9 +219,8 @@ def beat_2_softmax_concept(scene):
         emb_lbl.animate.next_to(target_pt, UR, buff=0.1),
         run_time=2.5,
     )
-    scene.wait(12.0)
+    scene.wait(2.0)
 
-    # --- Decision boundaries ---
     scene.play(FadeOut(move_caption), run_time=0.5)
 
     boundary_lines = VGroup()
@@ -132,13 +238,13 @@ def beat_2_softmax_concept(scene):
     )
     boundary_caption.to_edge(DOWN, buff=0.5)
     scene.play(Write(boundary_caption), run_time=2.0)
-    scene.wait(18.0)
+    scene.wait(3.0)
 
 
 # =============================================================================
-# BEAT 3: Limitations of Standard Softmax
+# PART D: Softmax Limitations (PLAN.md Scene 9 / Beat C)
 # =============================================================================
-def beat_3_softmax_limitations(scene):
+def part_d_softmax_limitations(scene):
     """Softmax only cares about correct side + intra/inter class spread."""
     scene.camera.background_color = DARK
 
@@ -146,7 +252,6 @@ def beat_3_softmax_limitations(scene):
     title.to_edge(UP, buff=0.5)
     scene.play(Write(title), run_time=2.0)
 
-    # --- Only requires correct side of boundary ---
     ax = Axes(
         x_range=[-3, 3, 1], y_range=[-2.8, 2.8, 1],
         width=6, height=4.8,
@@ -190,9 +295,9 @@ def beat_3_softmax_limitations(scene):
     )
     problem_text.to_edge(DOWN, buff=0.5)
     scene.play(Write(problem_text), run_time=2.0)
-    scene.wait(15.0)
+    scene.wait(2.0)
 
-    # --- Intra-class spread / inter-class overlap ---
+    # Intra/inter class spread
     scene.play(
         FadeOut(e_far), FadeOut(e_far_lbl), FadeOut(e_close),
         FadeOut(e_close_lbl), FadeOut(problem_text), FadeOut(w_arr),
@@ -228,16 +333,14 @@ def beat_3_softmax_limitations(scene):
     )
     spread_caption.to_edge(DOWN, buff=0.5)
     scene.play(Write(spread_caption), run_time=2.0)
-    scene.wait(25.0)
+    scene.wait(3.0)
 
-    # --- Need for margin-based loss ---
     scene.play(FadeOut(soft_dots), FadeOut(sub_lbl), FadeOut(spread_caption), run_time=1.0)
 
     need_text = Tex(r"\text{We need tighter constraints on the embedding space}", font_size=32, color=WHITE)
     need_text.move_to(UP * 1.0)
     scene.play(Write(need_text), run_time=2.0)
 
-    # Bullet-style solution items
     sol1 = Tex(r"\text{- Minimise intra-class variation}", font_size=26, color=CYAN)
     sol2 = Tex(r"\text{- Maximise inter-class variation}", font_size=26, color=CYAN)
     sol3 = Tex(r"\text{- Add angular margin to enforce strict boundaries}", font_size=26, color=CYAN)
@@ -247,131 +350,30 @@ def beat_3_softmax_limitations(scene):
 
     for item in sol_group:
         scene.play(FadeIn(item, shift=RIGHT * 0.1), run_time=1.2)
-        scene.wait(3.0)
+        scene.wait(1.0)
 
-    scene.wait(20.0)
-
-
-# =============================================================================
-# BEAT 4: Evolution of Face Recognition Milestones
-# =============================================================================
-def beat_4_evolution_milestones(scene):
-    """Timeline of face recognition from Eigenfaces to ArcFace."""
-    scene.camera.background_color = DARK
-
-    title = Tex(r"\text{Evolution of Face Recognition}", font_size=48, color=WHITE)
-    title.to_edge(UP, buff=0.5)
-    scene.play(Write(title), run_time=2.0)
-
-    milestones = [
-        ("1991", "Eigenfaces", MUTED, r"\text{PCA-based method}"),
-        ("2014", "DeepFace", BLUE, r"\text{Facebook's deep CNN}"),
-        ("2015", "FaceNet", GREEN, r"\text{Triplet loss, 99.6\% LFW}"),
-        ("2017", "SphereFace", CYAN, r"\text{Multiplicative angular margin}"),
-        ("2019", "ArcFace", ORANGE, r"\text{Additive angular margin}"),
-    ]
-
-    timeline_line = Line(LEFT * 5.5, RIGHT * 5.5, stroke_color=MUTED, stroke_width=1.5)
-    timeline_line.shift(DOWN * 0.5)
-    scene.play(ShowCreation(timeline_line), run_time=1.2)
-
-    tick_positions = np.linspace(-4.5, 4.5, len(milestones))
-
-    arcface_lbl = None
-    for i, (year, name, col, desc) in enumerate(milestones):
-        x = tick_positions[i]
-        tick = Line(DOWN * 0.15, UP * 0.15, stroke_color=col, stroke_width=2.5)
-        tick.move_to(timeline_line.get_center() + x * RIGHT)
-
-        year_lbl = Tex(year, font_size=20, color=col)
-        name_lbl = Tex(r"\text{" + name + r"}", font_size=22, color=col)
-        desc_lbl = Tex(desc, font_size=18, color=WHITE)
-
-        year_lbl.next_to(tick, DOWN, buff=0.2)
-        if i % 2 == 0:
-            name_lbl.next_to(tick, UP, buff=0.4)
-            desc_lbl.next_to(name_lbl, UP, buff=0.15)
-        else:
-            name_lbl.next_to(tick, DOWN, buff=0.6)
-            desc_lbl.next_to(name_lbl, DOWN, buff=0.15)
-
-        scene.play(ShowCreation(tick), Write(year_lbl), run_time=0.7)
-        scene.play(Write(name_lbl), Write(desc_lbl), run_time=1.0)
-        scene.wait(4.0)
-
-        if name == "ArcFace":
-            arcface_lbl = name_lbl
-
-    # Highlight ArcFace
-    if arcface_lbl:
-        arcface_highlight = SurroundingRectangle(arcface_lbl, color=ORANGE, buff=0.1)
-        scene.play(ShowCreation(arcface_highlight), run_time=1.2)
-
-    arcface_caption = Tex(r"\text{State-of-the-art as of 2019+}", font_size=26, color=ORANGE)
-    arcface_caption.to_edge(DOWN, buff=0.5)
-    scene.play(Write(arcface_caption), run_time=1.5)
-    scene.wait(25.0)
+    scene.wait(3.0)
 
 
 # =============================================================================
-# BEAT 5: Transition to ArcFace
+# MAIN SCENE
 # =============================================================================
-def beat_5_transition(scene):
-    """Bridge from Softmax to ArcFace via angular margin."""
-    scene.camera.background_color = DARK
-
-    bridge = Tex(r"\text{From Softmax to ArcFace}", font_size=52, color=WHITE)
-    bridge.move_to(UP * 1.2)
-    scene.play(Write(bridge), run_time=2.0)
-
-    arrow = Arrow(UP * 0.4, DOWN * 0.4, stroke_color=CYAN, stroke_width=3)
-    scene.play(ShowCreation(arrow), run_time=1.0)
-
-    key = Tex(
-        r"\text{The key idea: add an angular margin } m \text{ to the angle } \theta",
-        font_size=30, color=CYAN,
-    )
-    key.next_to(arrow, DOWN, buff=0.4)
-    scene.play(Write(key), run_time=2.5)
-    scene.wait(5.0)
-
-    soft_f = Tex(r"\text{Softmax: } \cos(\theta)", font_size=30, color=MUTED)
-    arc_f = Tex(r"\text{ArcFace: } \cos(\theta + m)", font_size=30, color=GREEN)
-    soft_f.shift(LEFT * 2.5 + DOWN * 2.0)
-    arc_f.shift(RIGHT * 2.5 + DOWN * 2.0)
-    vs = Tex(r"\rightarrow", font_size=36, color=WHITE)
-    vs.shift(DOWN * 2.0)
-
-    scene.play(Write(soft_f), run_time=1.2)
-    scene.play(Write(vs), run_time=0.5)
-    scene.play(Write(arc_f), run_time=1.2)
-    scene.wait(15.0)
-
-
-# =============================================================================
-# MAIN SCENE: plays all beats in sequence
-# =============================================================================
-class Scene05_Softmax(Scene):
+class Scene04_Softmax(Scene):
     def construct(self):
-        # Beat 1: Softmax Loss Function Introduction
-        beat_1_softmax_intro(self)
+        # Part A: Embedding Space Transition (Scene 5 in PLAN)
+        part_a_embedding_transition(self)
         self.clear()
         self.wait(1.0)
 
-        # Beat 2: How Softmax Works
-        beat_2_softmax_concept(self)
+        # Part B: Softmax Introduction (Scene 9 in PLAN)
+        part_b_softmax_intro(self)
         self.clear()
         self.wait(1.0)
 
-        # Beat 3: Limitations of Standard Softmax
-        beat_3_softmax_limitations(self)
+        # Part C: How Softmax Works
+        part_c_softmax_concept(self)
         self.clear()
         self.wait(1.0)
 
-        # Beat 4: Evolution of Face Recognition
-        beat_4_evolution_milestones(self)
-        self.clear()
-        self.wait(1.0)
-
-        # Beat 5: Transition to ArcFace
-        beat_5_transition(self)
+        # Part D: Softmax Limitations
+        part_d_softmax_limitations(self)
