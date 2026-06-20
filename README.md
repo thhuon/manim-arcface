@@ -12,7 +12,7 @@ This project fulfills the following course requirements:
 - **Clear Methodology**: Visualizes the mathematical approach with verifiable geometric interpretations
 - **Aesthetic Investment**: Custom-designed visuals with cinematic quality and smooth animations
 - **Real Dataset Evaluation**: Includes performance evaluation results on actual face recognition datasets
-- **Minimum Duration**: 9 minutes (exceeds 5-minute requirement)
+- **Minimum Duration**: 8 minutes (exceeds 5-minute requirement)
 - **Original Content**: All content created manually without generative AI
 
 **Bonus Elements**: Real-world applications including smartphone unlock, security systems, and medical diagnostics.
@@ -23,9 +23,9 @@ This project fulfills the following course requirements:
 
 | Item | Value |
 |------|-------|
-| **Framework** | ManimGL |
-| **Style** | Cinematic, geometric, intuition-first |
-| **Duration** | ~13 minutes (9 scenes) |
+| **Framework** | ManimGL (3b1b version) |
+| **Style** | 3Blue1Brown — cinematic, geometric, intuition-first |
+| **Duration** | ~15 minutes (8 scenes) |
 | **Purpose** | Explain ArcFace's additive angular margin loss visually |
 | **Audience** | Undergrad CS students with basic ML knowledge |
 
@@ -35,32 +35,37 @@ This project fulfills the following course requirements:
 
 This video explains how modern face recognition systems work, with a focus on the **ArcFace** algorithm. The content is structured as follows:
 
-### Scene 1: Introduction
-Opening scene showing multiple photos of the same person under different conditions. Contrasts human instant recognition vs computer pixel-level view. Introduces latent identity and open-set recognition.
+### Scene 0: Introduction
+**Beats:** A - Same Identity Different Images → B - Computer Sees Numbers → C - What Are We Recognizing → D - Open-Set Bridge
+Contrasts human instant recognition with computer pixel-level view. Introduces the concept of latent identity — the hidden pattern behind millions of pixels — and bridges to the question of why face recognition cannot simply classify identities by name.
 
-### Scene 2: Face Recognition Pipeline
-Four-stage pipeline: Input Image → Detection & Alignment → Feature Extraction → Matching/Verification. Explains how raw pixels become an identity decision.
+### Scene 1: Face Recognition Pipeline
+**Beats:** Overview → Stage 1: Input Image → Stage 2: Detection & Alignment → Stage 3: Feature Extraction → Stage 4: Matching/Verification → Final Recap
+Four-stage pipeline: Input Image → Detection & Alignment → Feature Extraction → Matching/Verification. Shows how raw pixels become an embedding vector and then an identity decision.
 
-### Scene 3: Challenges
-Why face recognition is hard: intra-class variation (same person, different conditions), inter-class similarity (different people, similar faces), real-world use cases requiring stable/accurate/robust embeddings, and open-set recognition.
+### Scene 2: Challenges
+**Beats:** A - Good Embedding Space → B - Intra-Class Variation → C - Inter-Class Similarity → D - Why Accuracy Matters → E - Open-Set Transition
+Three core challenges of face recognition: intra-class variation (same person, different conditions), inter-class similarity (different people, similar faces), and open-set recognition (unseen identities). Introduces the two goals: compact clusters and wide margins.
 
-### Scene 4: Variability
-4×3 grid showing the same person under 12 different conditions (lighting, pose, expression, occlusion). Real-world application cards: Phone Unlock, Security Camera, eKYC with stability/accuracy/robustness badges.
+### Scene 3: Embedding Space
+**Beats:** A - Manual Grouping → B - Network Learns to Place Faces → C - Distances Carry Meaning → D - Embedding Space Is Learned → E - What Objective Shapes The Space
+How neural networks turn face images into geometric points. Introduces the embedding space concept: coordinates matter less than relative geometry. Shows how training shapes the space through backpropagation.
 
-### Scene 5: Embedding Space
-Transition scene showing embedding clusters forming on a 2D plane. Bridges from Challenges to Softmax.
+### Scene 4: Softmax
+**Beats:** A - Embedding Space Transition (bridge) → B - Loss Function Introduction → C - How Softmax Works → D - Softmax Limitations
+Loss function introduction: how Softmax classifies by comparing embeddings against class weight vectors. Geometric interpretation with decision boundaries. Key limitation: Softmax only requires being on the correct side of the boundary — it does not enforce compact clusters or wide separation.
 
-### Scene 6: Softmax
-Introduction to the softmax loss function: formula, geometric interpretation with weight vectors and decision boundaries, limitations (only cares about correct side → loose clusters), and the need for angular margin constraints.
+### Scene 5: Evolution
+**Beats:** A - Milestones (FaceNet → SphereFace → CosFace → ArcFace)
+Timeline of face recognition milestones: FaceNet (Triplet Loss, 2015), SphereFace (Multiplicative Angular Margin, 2017), CosFace (Additive Cosine Margin, 2018), ArcFace (Additive Angular Margin, 2018). Bridges to the ArcFace Mechanism scene.
 
-### Scene 7: ArcFace Core
-Most important scene: evolution timeline (FaceNet → SphereFace → CosFace → ArcFace), full ArcFace formula with angular margin `cos(θ + m)`, why angular distance matters, normalization, 2D comparison, boundary shifting, and hypersphere view.
+### Scene 6: ArcFace Mechanism
+**Beats:** 1 - ArcFace Formula → 2 - Why Angular Distance → 3 - 2D Comparison (Softmax vs ArcFace) → 4 - Angular Margin Geometric View → 5 - Normalisation → 6 - Formula Step by Step → 7 - Boundary Shift → 8 - Hypersphere Embedding Space
+The core scene. Explains normalization (L2 on embeddings and weights), why angular distance matters on the unit hypersphere, the full ArcFace formula `cos(θ + m)`, boundary shifting effect, and the geometric meaning of additive angular margin.
 
-### Scene 8: ArcFace vs CosFace
-Comparison table, triplet loss challenges vs ArcFace advantages, side-by-side cluster comparison, robustness under difficult conditions, and summary of what ArcFace changes (network unchanged, loss improved, embedding structure much better).
-
-### Scene 9: Closing
-Real-world applications (Smartphones, Banking, Airports, Social Networks, Medical). Final hypersphere visualization with tight embedding clusters. "From pixels → geometry → identity."
+### Scene 7: Closing
+**Beats:** A - Real-World Applications → B - Final Closing
+Real-world applications (Smartphones, Banking, Airports, Social Networks, Medical). Final closing: from pixels → geometry → identity. "From pixels → geometry → identity."
 
 ---
 
@@ -70,33 +75,30 @@ Real-world applications (Smartphones, Banking, Airports, Social Networks, Medica
 |------|-------|
 | Resolution | 1920×1080 (1080p) |
 | FPS | 60fps |
-| Total Duration | ~13 minutes (9 scenes) |
+| Total Duration | ~15 minutes (8 scenes) |
 | Output | `.mp4` via FFmpeg |
-| Camera | 3D-enabled for hypersphere scenes (Scenes 6-7) |
+| Camera | 3D-enabled for hypersphere scenes (Scene 6) |
 
 ---
 
 ## Project Structure
 
 ```
-manim-arcface/
-├── manimlib/                  # ManimGL core library
-├── scenes/                    # Video scene implementations
+manim-arcface-2/
+├── scenes/                        # Video scene implementations
 │   ├── __init__.py
-│   ├── utils.py              # Shared utilities (colors, shapes, helpers)
-│   ├── scene00_introduction.py    # Scene 0: Introduction (hook, latent identity, open-set)
-│   ├── scene01_human_vs_computer.py # Scene 1: Face Recognition Pipeline (4 stages)
-│   ├── scene02_face_recognition_pipeline.py # Scene 2: Challenges (embedding quality, intra/inter-class)
-│   ├── scene03_challenges.py     # Scene 3: Variability grid + Why accuracy matters
-│   ├── scene04_embedding_space.py  # Scene 4: Embedding space transition
-│   ├── scene05_softmax.py         # Scene 5: Softmax intro, concept, limitations
-│   ├── scene06_arcface_core.py   # Scene 6: ArcFace Core (timeline, formula, hypersphere)
-│   ├── scene07_arcface_vs_cosface.py # Scene 7: ArcFace vs CosFace comparison
-│   ├── scene08_closing.py         # Scene 8: Applications + closing reveal
-│   └── scene09_embedding_transition.py # Scene 9: Embedding transition to ArcFace
-├── videos/                    # Rendered output
-├── datasets/                  # Evaluation datasets
-├── evaluation/                # Evaluation scripts and results
+│   ├── utils.py                   # Shared utilities (colors, shapes, helpers)
+│   ├── scene00_introduction.py     # Scene 0: Introduction
+│   ├── scene01_pipeline.py        # Scene 1: Face Recognition Pipeline
+│   ├── scene02_challenges.py      # Scene 2: Challenges
+│   ├── scene03_embedding_space.py # Scene 3: Embedding Space
+│   ├── scene04_softmax.py         # Scene 4: Softmax
+│   ├── scene05_evolution.py       # Scene 5: Evolution
+│   ├── scene06_arcface_mechanism.py # Scene 6: ArcFace Mechanism
+│   └── scene07_closing.py        # Scene 7: Closing
+├── videos/                       # Rendered output
+├── datasets/                     # Evaluation datasets
+├── evaluation/                   # Evaluation scripts and results
 └── requirements.txt
 ```
 
@@ -157,84 +159,157 @@ pip install -e .
 
 ## Render Commands
 
-Render videos using **ManimGL**:
+Render all 8 scenes with a single command each. Replace `-w -l` with your desired quality flag.
+
+### Preview All Scenes (480p — fast, for development)
 
 ```bash
-python3 -m manimlib scenes/<scene_file>.py <SceneClass> [-w] [-l|-m|--hd|--uhd]
+# Scene 0: Introduction
+python3 -m manimlib scenes/scene00_introduction.py Scene00Introduction -l
+
+# Scene 1: Face Recognition Pipeline
+python3 -m manimlib scenes/scene01_pipeline.py Scene01_Pipeline -l
+
+# Scene 2: Challenges
+python3 -m manimlib scenes/scene02_challenges.py Scene02_Challenges -l
+
+# Scene 3: Embedding Space
+python3 -m manimlib scenes/scene03_embedding_space.py Scene03_EmbeddingSpace -l
+
+# Scene 4: Softmax
+python3 -m manimlib scenes/scene04_softmax.py Scene04_Softmax -l
+
+# Scene 5: Evolution
+python3 -m manimlib scenes/scene05_evolution.py Scene05_Evolution -l
+
+# Scene 6: ArcFace Mechanism
+python3 -m manimlib scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism -l
+
+# Scene 7: Closing
+python3 -m manimlib scenes/scene07_closing.py Scene07_Closing -l
 ```
 
-### Quality Flags
+### Preview All Scenes (720p — recommended for review)
 
-| Flag | Quality |
-|------|---------|
-| `l` | Low (480p) |
-| `m` | Medium (720p) |
-| `h` | High (1080p) |
-| `p` | Production |
+```bash
+python3 -m manimlib scenes/scene00_introduction.py Scene00Introduction -m
+python3 -m manimlib scenes/scene01_pipeline.py Scene01_Pipeline -m
+python3 -m manimlib scenes/scene02_challenges.py Scene02_Challenges -m
+python3 -m manimlib scenes/scene03_embedding_space.py Scene03_EmbeddingSpace -m
+python3 -m manimlib scenes/scene04_softmax.py Scene04_Softmax -m
+python3 -m manimlib scenes/scene05_evolution.py Scene05_Evolution -m
+python3 -m manimlib scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism -m
+python3 -m manimlib scenes/scene07_closing.py Scene07_Closing -m
+```
 
-# Preview (display in window, no file saved)
-python3 -m manimlib scenes/scene00_introduction.py Scene00_Introduction
+### Render All Scenes (1080p — for final output)
 
-# Render and save video (default: 720p)
-python3 -m manimlib -w scenes/scene00_introduction.py Scene00_Introduction
+```bash
+python3 -m manimlib -w --hd scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -w --hd scenes/scene01_pipeline.py Scene01_Pipeline
+python3 -m manimlib -w --hd scenes/scene02_challenges.py Scene02_Challenges
+python3 -m manimlib -w --hd scenes/scene03_embedding_space.py Scene03_EmbeddingSpace
+python3 -m manimlib -w --hd scenes/scene04_softmax.py Scene04_Softmax
+python3 -m manimlib -w --hd scenes/scene05_evolution.py Scene05_Evolution
+python3 -m manimlib -w --hd scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism
+python3 -m manimlib -w --hd scenes/scene07_closing.py Scene07_Closing
+```
 
-# Render 480p (fast, for testing)
-python3 -m manimlib -w -l scenes/scene00_introduction.py Scene00_Introduction
+### Render All Scenes (4K — maximum quality)
 
-# Render 720p
-python3 -m manimlib -w -m scenes/scene00_introduction.py Scene00_Introduction
+```bash
+python3 -m manimlib -w --uhd scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -w --uhd scenes/scene01_pipeline.py Scene01_Pipeline
+python3 -m manimlib -w --uhd scenes/scene02_challenges.py Scene02_Challenges
+python3 -m manimlib -w --uhd scenes/scene03_embedding_space.py Scene03_EmbeddingSpace
+python3 -m manimlib -w --uhd scenes/scene04_softmax.py Scene04_Softmax
+python3 -m manimlib -w --uhd scenes/scene05_evolution.py Scene05_Evolution
+python3 -m manimlib -w --uhd scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism
+python3 -m manimlib -w --uhd scenes/scene07_closing.py Scene07_Closing
+```
 
-# Render 1080p (recommended for final output)
-python3 -m manimlib -w --hd scenes/scene00_introduction.py Scene00_Introduction
+### Presenter Mode (wait for spacebar between animations)
 
-# Render 4K (ultra high quality)
-python3 -m manimlib -w --uhd scenes/scene00_introduction.py Scene00_Introduction
+```bash
+python3 -m manimlib -p scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -p scenes/scene01_pipeline.py Scene01_Pipeline
+python3 -m manimlib -p scenes/scene02_challenges.py Scene02_Challenges
+python3 -m manimlib -p scenes/scene03_embedding_space.py Scene03_EmbeddingSpace
+python3 -m manimlib -p scenes/scene04_softmax.py Scene04_Softmax
+python3 -m manimlib -p scenes/scene05_evolution.py Scene05_Evolution
+python3 -m manimlib -p scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism
+python3 -m manimlib -p scenes/scene07_closing.py Scene07_Closing
+```
 
-# Presenter mode (wait for spacebar between animations)
-python3 -m manimlib -p scenes/scene00_introduction.py Scene00_Introduction
+### Start from Animation N (skip first N animations)
 
-# Save final frame only (fast testing)
-python3 -m manimlib -s scenes/scene00_introduction.py Scene00_Introduction
+```bash
+python3 -m manimlib -w -l -n 5 scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism
+```
 
-# Export as GIF
-python3 -m manimlib -i scenes/scene00_introduction.py Scene00_Introduction
+### List All Scenes in a File
 
-# Start from animation N (e.g., animation 5)
-python3 -m manimlib -w -n 5 scenes/scene00_introduction.py Scene00_Introduction
-
-# Custom resolution (e.g., 720)
-python3 -m manimlib -w -r 720 scenes/scene00_introduction.py Scene00_Introduction
-
-# Custom FPS
-python3 -m manimlib -w --fps 30 scenes/scene00_introduction.py Scene00_Introduction
-
-# List all scenes in a file
+```bash
 python3 -m manimlib scenes/scene00_introduction.py
+python3 -m manimlib scenes/scene01_pipeline.py
+python3 -m manimlib scenes/scene02_challenges.py
+python3 -m manimlib scenes/scene03_embedding_space.py
+python3 -m manimlib scenes/scene04_softmax.py
+python3 -m manimlib scenes/scene05_evolution.py
+python3 -m manimlib scenes/scene06_arcface_mechanism.py
+python3 -m manimlib scenes/scene07_closing.py
+```
 
-# Using venv
+### Using Virtual Environment
+
+```bash
 cd /home/hg/source/manim-arcface-2
 source venv/bin/activate
-python -m manimlib -w scenes/scene00_introduction.py Scene00_Introduction
+python -m manimlib -w --hd scenes/scene00_introduction.py Scene00Introduction
 ```
 
-### Choosing Video Quality
+---
 
-| Quality | Resolution | Use Case | Render Time |
-|---------|-----------|----------|-------------|
-| **480p** (`-l`) | 854×480 | Quick testing, draft review | ~1x |
-| **720p** (`-m`) | 1280×720 | Preview, internal review | ~2x |
-| **1080p** (`--hd`) | 1920×1080 | **Recommended for final output** | ~4x |
-| **4K** (`--uhd`) | 3840×2160 | Maximum quality, large displays | ~8x+ |
+## Quality Reference
+
+| Flag | Quality | Resolution | Use Case |
+|------|---------|-----------|----------|
+| `-l` | Low | 480p | Fast testing during development |
+| `-m` | Medium | 720p | Preview, internal review |
+| `--hd` | High | 1080p | **Recommended for final output** |
+| `--uhd` | Ultra | 4K | Large displays, maximum quality |
 
 **Recommendations:**
-- **Development/Testing**: Use `-l` (480p) for fast iteration during coding
+- **Development/Testing**: Use `-l` (480p) for fast iteration
 - **Review**: Use `-m` (720p) for scene-by-scene review
 - **Final Output**: Use `--hd` (1080p) for YouTube/presentations
-- **4K**: Only for large displays or if you have powerful GPU
+- **4K**: Only for large displays or powerful GPU
 
-### Video Output Directory
+---
+
+## Useful Flags Reference
+
+| Flag | Description |
+|------|-------------|
+| `-w` | Write to file (save video) |
+| `-l` | Low quality (480p) |
+| `-m` | Medium quality (720p) |
+| `--hd` | High quality (1080p) |
+| `--uhd` | Ultra high quality (4K) |
+| `-s` | Save final frame only (no animation) |
+| `-n <num>` | Start at animation number |
+| `-o` | Write and open result |
+| `-p` | Presenter mode (wait for spacebar) |
+| `-r <px>` | Custom resolution |
+| `--fps <n>` | Custom FPS |
+| `-i` | Export as GIF |
+
+---
+
+## Video Output Directory
 
 Rendered videos are saved in:
+
 ```
 videos/<SceneClass>/
 └── <Quality>/
@@ -242,46 +317,3 @@ videos/<SceneClass>/
 ```
 
 Example: `videos/Scene00Introduction/480p15/Scene00Introduction.mp4`
-
-### Useful Flags
-
-| Flag | Description |
-|------|-------------|
-| `-w` | Write to file (save video) |
-| `-s` | Save final frame only (no animation) |
-| `-n <num>` | Start at animation number |
-| `-o` | Write and open result |
-| `-p` | Presenter mode |
-| `-l` | Low quality (480p) |
-| `-m` | Medium quality (720p) |
-| `--hd` | High quality (1080p) |
-| `--uhd` | Ultra high quality (4K) |
-| `-r <px>` | Custom resolution |
-| `--fps <n>` | Custom FPS |
-| `-i` | Export as GIF |
-
----
-
-## Using Manim
-
-Render a specific scene:
-
-```sh
-python3 -m manimlib -w -l scenes/scene00_introduction.py Scene00Introduction      # 0: Introduction
-python3 -m manimlib -w -l scenes/scene01_pipeline.py Scene01_Pipeline              # 1: Pipeline
-python3 -m manimlib -w -l scenes/scene02_challenges.py Scene02_Challenges          # 2: Challenges
-python3 -m manimlib -w -l scenes/scene03_embedding_space.py Scene03_EmbeddingSpace  # 3: Embedding Space
-python3 -m manimlib -w -l scenes/scene04_softmax.py Scene04_Softmax                # 4: Softmax
-python3 -m manimlib -w -l scenes/scene05_evolution.py Scene05_Evolution             # 5: Evolution
-python3 -m manimlib -w -l scenes/scene06_arcface_mechanism.py Scene06_ArcFaceMechanism  # 6: ArcFace Mechanism
-python3 -m manimlib -w -l scenes/scene07_closing.py Scene07_Closing                # 7: Closing
-```
-
-Useful flags:
-* `-w` to write the scene to a file
-* `-l` for low quality (480p, fast testing)
-* `-m` for medium quality (720p)
-* `--hd` for high quality (1080p)
-* `-s` to skip to the final frame
-* `-n <number>` to skip ahead to a specific animation
-* `-p` for presenter mode (wait for spacebar)
