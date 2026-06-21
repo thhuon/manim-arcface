@@ -9,12 +9,17 @@ from scenes.utils import *
 
 
 class Scene01_Pipeline(Scene):
-    SAFE_WIDTH = 12.25
-    SAFE_HEIGHT = 6.80
+    SAFE_WIDTH = 12.95
+    SAFE_HEIGHT = 7.10
 
     def construct(self):
         self.camera.background_color = DARK
         self.frame = self.camera.frame
+
+        card = make_centered_title_card("Face Recognition Pipeline")
+        self.play(FadeIn(card), run_time=1.0)
+        self.wait(1.0)
+        self.play(FadeOut(card), run_time=0.5)
 
         self.pipeline = self.create_pipeline()
         self.beat1_overview()
@@ -35,14 +40,13 @@ class Scene01_Pipeline(Scene):
     def create_pipeline(self):
         title = make_scene_title(
             "Face Recognition Pipeline",
-            "Four fast stages turn raw pixels into an identity decision",
             title_size=42,
         )
         stages = VGroup(
             make_stage_card(1, "Input Image", "camera frame", color=CYAN),
-            make_stage_card(2, "Detection", "crop + align", color=BLUE),
-            make_stage_card(3, "Features", "neural network", color=ORANGE),
-            make_stage_card(4, "Matching", "compare embeddings", color=GREEN),
+            make_stage_card(2, "Detection & Alignment", "crop + standardize", color=BLUE),
+            make_stage_card(3, "Feature Extraction", "embedding vector", color=ORANGE),
+            make_stage_card(4, "Matching / Verification", "compare embeddings", color=GREEN),
         )
         stages.arrange(RIGHT, buff=0.38)
         stages.set_width(12.15)
@@ -72,76 +76,53 @@ class Scene01_Pipeline(Scene):
             stroke_width=1.2,
         )
         dot = Dot(color=YELLOW, radius=0.08).move_to(timeline.get_start())
-        packet = RoundedRectangle(
-            width=0.34,
-            height=0.22,
-            corner_radius=0.04,
-            stroke_color=YELLOW,
-            stroke_width=1.4,
-            fill_color=YELLOW,
-            fill_opacity=0.22,
-        ).move_to(self.pipeline.stages[0].get_left() + RIGHT * 0.35 + UP * 0.08)
-        fast = latex(r"\text{usually less than one second}", size=22, color=YELLOW)
-        fast.next_to(timeline, DOWN, buff=0.22)
-        self.play(ShowCreation(timeline), FadeIn(dot), FadeIn(packet), FadeIn(fast), run_time=0.45)
-        stage_targets = [
-            stage.get_center() + UP * 0.08
-            for stage in self.pipeline.stages
-        ]
+        self.play(ShowCreation(timeline), FadeIn(dot), run_time=0.45)
         time_targets = [
-            interpolate(timeline.get_start(), timeline.get_end(), i / (len(stage_targets) - 1))
-            for i in range(len(stage_targets))
+            interpolate(timeline.get_start(), timeline.get_end(), i / (len(self.pipeline.stages) - 1))
+            for i in range(len(self.pipeline.stages))
         ]
-        for stage, packet_target, dot_target in zip(self.pipeline.stages, stage_targets, time_targets):
-            glow = glow_copy(stage[0], color=stage[0].get_stroke_color(), width=6, opacity=0.10)
+        for stage, dot_target in zip(self.pipeline.stages, time_targets):
+            stage_box = stage[0]
+            stage_color = stage_box.get_stroke_color()
+            glow = glow_copy(stage_box, color=stage_color, width=9, opacity=0.18)
             self.play(
                 dot.animate.move_to(dot_target),
-                packet.animate.move_to(packet_target),
                 FadeIn(glow),
-                stage[0].animate.set_stroke(width=3.0),
+                stage_box.animate.set_fill(stage_color, opacity=0.20).set_stroke(width=3.4),
                 run_time=0.28,
                 rate_func=linear,
             )
-            self.play(stage[0].animate.set_stroke(width=2.0), FadeOut(glow), run_time=0.12)
+            self.play(
+                stage_box.animate.set_fill(PANEL, opacity=0.30).set_stroke(width=2.0),
+                FadeOut(glow),
+                run_time=0.12,
+            )
         self.wait(0.7)
 
     # -------------------------------------------------------------------------
     # Stage 1 - input
     # -------------------------------------------------------------------------
     def beat2_input_image(self):
-        header = make_scene_title("Stage 1: Input Image", "The camera captures raw RGB values", title_size=39)
-        camera = make_camera_icon().scale(1.25)
-        camera.move_to(LEFT * 4.65 + UP * 0.25)
+        header = make_scene_title("Stage 1: Input Image", title_size=39)
+        header.to_edge(UP, buff=0.45)
+        camera = make_camera_icon().scale(1.55)
+        camera.move_to(LEFT * 4.75 + DOWN * 0.05)
 
-        face = make_image_card("face_scan.png", width=2.15, height=2.58, stroke_color=CYAN)
-        face.move_to(LEFT * 1.25 + UP * 0.08)
-        face_label = make_badge("captured frame", color=CYAN, font_size=19)
-        face_label.next_to(face, DOWN, buff=0.16)
+        face = make_image_card("face_scan.png", width=3.20, height=3.84, stroke_color=CYAN)
+        face.move_to(RIGHT * 0.15 + DOWN * 0.02)
+        face_label = make_badge("captured frame", color=CYAN, font_size=23)
+        face_label.next_to(face, DOWN, buff=0.18)
 
-        grid = make_pixel_grid(size=2.15, n=8)
+        grid = make_pixel_grid(size=3.20, n=8)
         grid.move_to(face)
 
-        matrix = make_pixel_matrix_from_image("face_scan.png", n=10, side=2.35)
-        matrix.move_to(RIGHT * 2.40 + UP * 0.08)
-        matrix_label = make_badge(r"RGB tensor", color=BLUE, font_size=19)
-        matrix_label.next_to(matrix, DOWN, buff=0.16)
-        channels = VGroup(
-            make_badge("R", color=RED, font_size=16, h_buff=0.13, v_buff=0.07),
-            make_badge("G", color=GREEN, font_size=16, h_buff=0.13, v_buff=0.07),
-            make_badge("B", color=BLUE, font_size=16, h_buff=0.13, v_buff=0.07),
-        ).arrange(RIGHT, buff=0.12)
-        channels.next_to(matrix, UP, buff=0.15)
-
         fov = VGroup(
-            DashedLine(camera.get_right(), face.get_left() + UP * 0.86, color=CYAN, stroke_width=1.5, dash_length=0.08),
-            DashedLine(camera.get_right(), face.get_left() + DOWN * 0.86, color=CYAN, stroke_width=1.5, dash_length=0.08),
+            DashedLine(camera.get_right(), face.get_left() + UP * 1.22, color=CYAN, stroke_width=1.5, dash_length=0.08),
+            DashedLine(camera.get_right(), face.get_left() + DOWN * 1.22, color=CYAN, stroke_width=1.5, dash_length=0.08),
         )
-        arrow = make_flow_arrow(face.get_right(), matrix.get_left(), color=WHITE)
-        formula = latex(r"\mathbf{I}\in\mathbb{R}^{H\times W\times 3}", size=32, color=WHITE)
-        formula.to_edge(DOWN, buff=0.58)
-        fit_to_bounds(formula, max_width=11.0)
-        layout = Group(header, camera, face, face_label, grid, matrix, matrix_label, channels, fov, arrow, formula)
-        self.fit_group_to_frame(layout)
+        content = Group(camera, face, face_label, grid, fov)
+        fit_to_bounds(content, max_width=self.SAFE_WIDTH, max_height=5.55)
+        content.move_to(DOWN * 0.18)
 
         scan_line = Line(
             face.get_left() + RIGHT * 0.08,
@@ -152,54 +133,31 @@ class Scene01_Pipeline(Scene):
         )
         scan_line.move_to(face.get_top() + DOWN * 0.22)
         scan_target = scan_line.copy().move_to(face.get_bottom() + UP * 0.22)
-        sample_ids = [4, 17, 29, 41, 52, 63, 76, 88]
-        particles = VGroup(*[
-            Dot(point=face.get_center(), color=matrix[i].get_fill_color(), radius=0.045)
-            for i in sample_ids
-        ])
-        targets = [matrix[i].get_center() for i in sample_ids]
 
         self.play(FadeIn(header), run_time=0.5)
         self.play(FadeIn(camera), run_time=0.35)
+        # Flash effect on camera
+        flash = Circle(radius=0.55, color=WHITE, fill_opacity=1.0).move_to(camera)
+        self.add(flash)
+        self.play(
+            flash.animate.set_fill(opacity=0).set_stroke(opacity=0),
+            run_time=0.30,
+        )
+        self.remove(flash)
         self.play(FadeIn(face), FadeIn(face_label), ShowCreation(fov), run_time=0.65)
         self.play(FadeIn(grid), ShowCreation(scan_line), run_time=0.35)
         self.play(Transform(scan_line, scan_target), run_time=0.80, rate_func=linear)
-        self.play(FadeOut(scan_line), FadeIn(channels), run_time=0.25)
-        self.play(GrowArrow(arrow), run_time=0.35)
-        self.add(particles)
-        self.play(
-            LaggedStart(*[
-                dot.animate.move_to(target)
-                for dot, target in zip(particles, targets)
-            ], lag_ratio=0.035),
-            run_time=0.85,
-            rate_func=smooth,
-        )
-        self.play(FadeOut(particles), run_time=0.15)
-        self.play(
-            LaggedStart(*[FadeIn(cell, scale=1.15) for cell in matrix], lag_ratio=0.006),
-            FadeIn(matrix_label),
-            run_time=1.2,
-        )
-        self.play(FadeIn(formula), run_time=0.45)
+        self.play(FadeOut(scan_line), run_time=0.16)
         self.wait(0.8)
 
     # -------------------------------------------------------------------------
     # Stage 2 - detection and alignment
     # -------------------------------------------------------------------------
     def beat3_detection_alignment(self):
-        header = make_scene_title("Stage 2: Detection & Alignment", "Find the face, remove clutter, standardize pose", title_size=38)
+        header = make_scene_title("Stage 2: Detection & Alignment", title_size=38)
 
-        full = ImageMobject(asset_path("face_scan.png"), height=3.55)
-        full.move_to(LEFT * 4.15 + DOWN * 0.05)
-        full_frame = RoundedRectangle(
-            width=full.get_width() + 0.22,
-            height=full.get_height() + 0.22,
-            corner_radius=0.10,
-            stroke_color=MUTED,
-            stroke_width=1.2,
-            fill_opacity=0,
-        ).move_to(full)
+        full = make_image_card("face_normal.png", width=2.42, height=2.92, stroke_color=CYAN)
+        full.move_to(LEFT * 4.25 + DOWN * 0.03)
 
         bbox = RoundedRectangle(
             width=full.get_width() * 0.58,
@@ -211,8 +169,8 @@ class Scene01_Pipeline(Scene):
         ).move_to(full.get_center() + DOWN * 0.03)
 
         noise = VGroup(
-            Rectangle(width=full.get_width() + 0.20, height=0.72, fill_color=DARK, fill_opacity=0.58, stroke_opacity=0),
-            Rectangle(width=0.60, height=full.get_height(), fill_color=DARK, fill_opacity=0.58, stroke_opacity=0),
+            Rectangle(width=full.get_width() + 0.20, height=0.58, fill_color=DARK, fill_opacity=0.42, stroke_opacity=0),
+            Rectangle(width=0.46, height=full.get_height(), fill_color=DARK, fill_opacity=0.42, stroke_opacity=0),
         )
         noise[0].move_to(full.get_top() + DOWN * 0.35)
         noise[1].move_to(full.get_left() + RIGHT * 0.28)
@@ -233,27 +191,45 @@ class Scene01_Pipeline(Scene):
             Line(lm_positions[3], lm_positions[4], color=GREEN, stroke_width=1.4, stroke_opacity=0.70),
         )
 
-        cropped = make_image_card("detection_alignment_face.png", width=1.95, height=2.35, stroke_color=BLUE)
+        cropped = make_image_card("face_normal.png", width=2.12, height=2.56, stroke_color=BLUE)
         cropped.move_to(ORIGIN + RIGHT * 0.10 + DOWN * 0.05)
-        tilted = cropped.copy().rotate(-8 * DEGREES)
-        aligned = make_image_card("face_normal.png", width=1.95, height=2.35, stroke_color=GREEN)
+        aligned = make_image_card("face_normal.png", width=2.12, height=2.56, stroke_color=GREEN)
         aligned.move_to(RIGHT * 4.05 + DOWN * 0.05)
         guide = DashedLine(aligned.get_left() + UP * 0.42, aligned.get_right() + UP * 0.42,
                            color=YELLOW, stroke_width=1.5, dash_length=0.10)
+        aligned_lm_positions = [
+            aligned.get_center() + LEFT * 0.36 + UP * 0.42,
+            aligned.get_center() + RIGHT * 0.36 + UP * 0.42,
+            aligned.get_center() + UP * 0.02,
+            aligned.get_center() + LEFT * 0.25 + DOWN * 0.46,
+            aligned.get_center() + RIGHT * 0.25 + DOWN * 0.46,
+        ]
+        aligned_landmarks = VGroup(*[Dot(point=p, radius=0.055, color=GREEN) for p in aligned_lm_positions])
+        aligned_mesh = VGroup(
+            Line(aligned_lm_positions[0], aligned_lm_positions[2], color=GREEN, stroke_width=1.3, stroke_opacity=0.72),
+            Line(aligned_lm_positions[1], aligned_lm_positions[2], color=GREEN, stroke_width=1.3, stroke_opacity=0.72),
+            Line(aligned_lm_positions[2], aligned_lm_positions[3], color=GREEN, stroke_width=1.3, stroke_opacity=0.72),
+            Line(aligned_lm_positions[2], aligned_lm_positions[4], color=GREEN, stroke_width=1.3, stroke_opacity=0.72),
+            Line(aligned_lm_positions[3], aligned_lm_positions[4], color=GREEN, stroke_width=1.3, stroke_opacity=0.72),
+        )
 
         labels = VGroup(
-            make_badge("detect", color=CYAN, font_size=18).next_to(bbox, DOWN, buff=0.14),
-            make_badge("crop", color=BLUE, font_size=18).next_to(cropped, DOWN, buff=0.15),
-            make_badge("align", color=GREEN, font_size=18).next_to(aligned, DOWN, buff=0.15),
+            make_badge("detect", color=CYAN, font_size=23).next_to(full, DOWN, buff=0.17),
+            make_badge("crop", color=BLUE, font_size=23).next_to(cropped, DOWN, buff=0.17),
+            make_badge("align", color=GREEN, font_size=23).next_to(aligned, DOWN, buff=0.17),
         )
         arrows = VGroup(
             make_flow_arrow(full.get_right(), cropped.get_left(), color=CYAN),
             make_flow_arrow(cropped.get_right(), aligned.get_left(), color=GREEN),
         )
         caption = latex(r"\text{A cleaner, normalized face is easier for the network to compare.}", size=25, color=WHITE)
-        caption.to_edge(DOWN, buff=0.50)
-        layout = Group(header, full, full_frame, bbox, noise, landmarks, mesh, tilted, cropped, aligned, guide, labels, arrows, caption)
+        caption.next_to(labels, DOWN, buff=0.28)
+        fit_to_bounds(caption, max_width=11.5)
+        layout = Group(header, full, bbox, noise, landmarks, mesh, cropped, aligned, guide, aligned_landmarks, aligned_mesh, labels, arrows, caption)
         self.fit_group_to_frame(layout)
+        min_caption_bottom = -3.20
+        if caption.get_bottom()[1] < min_caption_bottom:
+            layout.shift(UP * (min_caption_bottom - caption.get_bottom()[1]))
         scan_line = Line(
             full.get_left() + RIGHT * 0.08,
             full.get_right() + LEFT * 0.08,
@@ -265,16 +241,17 @@ class Scene01_Pipeline(Scene):
         scan_target = scan_line.copy().move_to(full.get_bottom() + UP * 0.25)
         crop_ghost = bbox.copy()
         crop_target = RoundedRectangle(
-            width=tilted.get_width(),
-            height=tilted.get_height(),
+            width=cropped.get_width(),
+            height=cropped.get_height(),
             corner_radius=0.07,
             stroke_color=BLUE,
             stroke_width=2.4,
             fill_opacity=0,
-        ).move_to(tilted)
+        ).move_to(cropped)
+        align_ghost = cropped.copy().rotate(-8 * DEGREES)
 
         self.play(FadeIn(header), run_time=0.5)
-        self.play(FadeIn(full), ShowCreation(full_frame), run_time=0.55)
+        self.play(FadeIn(full), run_time=0.55)
         self.play(ShowCreation(scan_line), run_time=0.20)
         self.play(Transform(scan_line, scan_target), run_time=0.75, rate_func=linear)
         self.play(FadeOut(scan_line), run_time=0.16)
@@ -283,10 +260,17 @@ class Scene01_Pipeline(Scene):
         self.play(FadeIn(noise), FadeIn(labels[0]), run_time=0.38)
         self.play(LaggedStart(*[GrowFromCenter(dot) for dot in landmarks], lag_ratio=0.08), run_time=0.55)
         self.play(ShowCreation(mesh), run_time=0.4)
-        self.play(Transform(crop_ghost, crop_target), GrowArrow(arrows[0]), FadeIn(tilted), FadeIn(labels[1]), run_time=0.65)
+        self.play(Transform(crop_ghost, crop_target), GrowArrow(arrows[0]), FadeIn(cropped), FadeIn(labels[1]), run_time=0.65)
         self.play(FadeOut(crop_ghost), run_time=0.12)
-        self.play(Transform(tilted, cropped), run_time=0.65)
-        self.play(GrowArrow(arrows[1]), FadeIn(aligned), ShowCreation(guide), FadeIn(labels[2]), run_time=0.65)
+        self.add(align_ghost)
+        self.play(GrowArrow(arrows[1]), align_ghost.animate.rotate(8 * DEGREES).move_to(aligned), run_time=0.65)
+        self.play(Transform(align_ghost, aligned), ShowCreation(guide), FadeIn(labels[2]), run_time=0.35)
+        self.play(FadeOut(align_ghost), FadeIn(aligned), run_time=0.12)
+        self.play(
+            LaggedStart(*[GrowFromCenter(dot) for dot in aligned_landmarks], lag_ratio=0.08),
+            ShowCreation(aligned_mesh),
+            run_time=0.55,
+        )
         self.play(ShowPassingFlash(guide.copy().set_stroke(width=4.0), time_width=1.0), run_time=0.55)
         self.play(FadeIn(caption), run_time=0.45)
         self.wait(0.8)
@@ -295,47 +279,47 @@ class Scene01_Pipeline(Scene):
     # Stage 3 - feature extraction
     # -------------------------------------------------------------------------
     def beat4_feature_extraction(self):
-        header = make_scene_title("Stage 3: Feature Extraction", "A neural network turns a face into an embedding vector", title_size=38)
+        header = make_scene_title("Stage 3: Feature Extraction", title_size=38)
 
-        face = make_image_card("feature_extraction.png", width=1.75, height=2.10, stroke_color=CYAN)
-        face.move_to(LEFT * 5.15 + DOWN * 0.10)
-        face_label = make_badge("aligned face", color=CYAN, font_size=18)
+        face = make_image_card("feature_extraction.png", width=1.95, height=2.34, stroke_color=CYAN)
+        face.move_to(LEFT * 5.00 + DOWN * 0.02)
+        face_label = make_badge("aligned face", color=CYAN, font_size=20)
         face_label.next_to(face, DOWN, buff=0.14)
 
-        net = make_neural_network().scale(1.45)
-        net.move_to(LEFT * 1.15 + DOWN * 0.03)
-        net_label = make_badge("CNN feature layers", color=ORANGE, font_size=18)
-        net_label.next_to(net, DOWN, buff=0.22)
+        net = make_neural_network().scale(1.26)
+        net.move_to(LEFT * 1.95 + DOWN * 0.02)
+        net_label = make_badge("CNN layers", color=ORANGE, font_size=20)
+        net_label.next_to(net, DOWN, buff=0.20)
 
         feature_tiles = VGroup()
         tile_labels = ["edges", "texture", "eyes", "nose", "jaw"]
         for i, label in enumerate(tile_labels):
             tile = RoundedRectangle(
-                width=0.78,
-                height=0.58,
+                width=0.66,
+                height=0.52,
                 corner_radius=0.06,
                 stroke_color=CYAN if i < 2 else GREEN,
                 stroke_width=1.3,
                 fill_color=PANEL,
                 fill_opacity=0.50,
             )
-            text = latex(rf"\text{{{label}}}", size=13, color=WHITE)
+            text = latex(rf"\text{{{label}}}", size=12, color=WHITE)
             text.move_to(tile)
             feature_tiles.add(VGroup(tile, text))
         feature_tiles.arrange(RIGHT, buff=0.12)
-        feature_tiles.move_to(RIGHT * 2.75 + UP * 1.08)
+        feature_tiles.move_to(RIGHT * 2.30 + UP * 0.02)
         feature_label = latex(r"\text{features get more abstract}", size=20, color=MUTED)
         feature_label.next_to(feature_tiles, DOWN, buff=0.12)
 
         vector = make_vector([r"0.12", r"-0.44", r"0.83", r"\vdots", r"0.31"], font_size=21)
-        vector.move_to(RIGHT * 4.75 + DOWN * 0.42)
+        vector.move_to(RIGHT * 5.12 + DOWN * 0.02)
         vector_label = make_badge("embedding", color=GREEN, font_size=20)
         vector_label.next_to(vector, DOWN, buff=0.18)
 
         arrows = VGroup(
             make_flow_arrow(face.get_right(), net.get_left(), color=CYAN),
             make_flow_arrow(net.get_right(), feature_tiles.get_left(), color=ORANGE),
-            make_flow_arrow(feature_tiles.get_bottom() + DOWN * 0.05, vector.get_top() + UP * 0.05, color=GREEN),
+            make_flow_arrow(feature_tiles.get_right(), vector.get_left(), color=GREEN),
         )
 
         wave_path = Line(net.get_left() + LEFT * 0.25, net.get_right() + RIGHT * 0.25)
@@ -407,7 +391,7 @@ class Scene01_Pipeline(Scene):
     # Stage 4 - matching and verification
     # -------------------------------------------------------------------------
     def beat5_matching_verification(self):
-        header = make_scene_title("Stage 4: Matching / Verification", "Compare the query embedding with enrolled embeddings", title_size=38)
+        header = make_scene_title("Stage 4: Matching / Verification", title_size=38)
 
         query = Group(
             make_image_card("face_scan.png", width=1.25, height=1.45, stroke_color=YELLOW),

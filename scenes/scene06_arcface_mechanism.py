@@ -72,7 +72,7 @@ def beat_2_why_angular_distance(scene):
     center = circle.get_center()
     scene.play(ShowCreation(circle), run_time=1.2)
 
-    r_label = Tex(r"\|f\| = 1", font_size=24, color=MUTED)
+    r_label = Tex(r"\Vert f \Vert = 1", font_size=24, color=MUTED)
     r_label.next_to(circle, RIGHT, buff=0.2).shift(DOWN * 0.5)
     scene.play(Write(r_label), run_time=0.8)
 
@@ -319,7 +319,7 @@ def beat_5_normalisation(scene):
     scene.play(ShowCreation(unit_dots), run_time=2.0)
 
     conclusion = Tex(
-        r"\|f\| = 1,\;\|W\| = 1 \;\Rightarrow\; W^T f = \cos\theta",
+        r"\Vert f \Vert = 1,\;\Vert W \Vert = 1 \;\Rightarrow\; W^T f = \cos\theta",
         font_size=30, color=GREEN,
     )
     conclusion.to_edge(DOWN, buff=0.5)
@@ -343,7 +343,7 @@ def beat_6_formula_steps(scene):
     scene.play(Write(step1), run_time=2.0)
     scene.wait(2.0)
 
-    step2 = Tex(r"\text{Step 2: } \cos(\theta_{y_i} + m) \;\leftarrow\;\text{add margin }m", font_size=32, color=CYAN)
+    step2 = Tex(r"\text{Step 2: } \cos(\theta_{y_i} + m) \leftarrow \text{ add margin } m", font_size=32, color=CYAN)
     step2.next_to(step1, DOWN, buff=0.6)
     scene.play(Write(step2), run_time=2.0)
     scene.wait(2.0)
@@ -445,7 +445,7 @@ def beat_8_hypersphere(scene):
     center = sphere.get_center()
     scene.play(ShowCreation(sphere), run_time=1.2)
 
-    r_label = Tex(r"\text{Unit Hypersphere: } \|f\| = 1", font_size=24, color=MUTED)
+    r_label = Tex(r"\text{Unit Hypersphere: } \Vert f \Vert = 1", font_size=24, color=MUTED)
     r_label.to_edge(DOWN, buff=0.5)
     scene.play(Write(r_label), run_time=1.2)
 
@@ -508,6 +508,12 @@ def beat_8_hypersphere(scene):
 # =============================================================================
 class Scene06_ArcFaceMechanism(Scene):
     def construct(self):
+        self.camera.background_color = DARK
+        card = make_centered_title_card("ArcFace Mechanism")
+        self.play(FadeIn(card), run_time=1.0)
+        self.wait(1.0)
+        self.play(FadeOut(card), run_time=0.5)
+
         beat_1_arcface_intro(self)
         self.clear()
         self.wait(1.0)

@@ -192,7 +192,7 @@ python3 -m manimlib scenes/scene07_closing.py Scene07_Closing -l
 ### Preview All Scenes (720p — recommended for review)
 
 ```bash
-python3 -m manimlib scenes/scene00_introduction.py Scene00Introduction -m
+python3 -m manimlib scenes/scene00_introduction.py Scene00_Introduction -m
 python3 -m manimlib scenes/scene01_pipeline.py Scene01_Pipeline -m
 python3 -m manimlib scenes/scene02_challenges.py Scene02_Challenges -m
 python3 -m manimlib scenes/scene03_embedding_space.py Scene03_EmbeddingSpace -m
@@ -205,7 +205,7 @@ python3 -m manimlib scenes/scene07_closing.py Scene07_Closing -m
 ### Render All Scenes (1080p — for final output)
 
 ```bash
-python3 -m manimlib -w --hd scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -w --hd scenes/scene00_introduction.py Scene00_Introduction
 python3 -m manimlib -w --hd scenes/scene01_pipeline.py Scene01_Pipeline
 python3 -m manimlib -w --hd scenes/scene02_challenges.py Scene02_Challenges
 python3 -m manimlib -w --hd scenes/scene03_embedding_space.py Scene03_EmbeddingSpace
@@ -218,7 +218,7 @@ python3 -m manimlib -w --hd scenes/scene07_closing.py Scene07_Closing
 ### Render All Scenes (4K — maximum quality)
 
 ```bash
-python3 -m manimlib -w --uhd scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -w --uhd scenes/scene00_introduction.py Scene00_Introduction
 python3 -m manimlib -w --uhd scenes/scene01_pipeline.py Scene01_Pipeline
 python3 -m manimlib -w --uhd scenes/scene02_challenges.py Scene02_Challenges
 python3 -m manimlib -w --uhd scenes/scene03_embedding_space.py Scene03_EmbeddingSpace
@@ -231,7 +231,7 @@ python3 -m manimlib -w --uhd scenes/scene07_closing.py Scene07_Closing
 ### Presenter Mode (wait for spacebar between animations)
 
 ```bash
-python3 -m manimlib -p scenes/scene00_introduction.py Scene00Introduction
+python3 -m manimlib -p scenes/scene00_introduction.py Scene00_Introduction
 python3 -m manimlib -p scenes/scene01_pipeline.py Scene01_Pipeline
 python3 -m manimlib -p scenes/scene02_challenges.py Scene02_Challenges
 python3 -m manimlib -p scenes/scene03_embedding_space.py Scene03_EmbeddingSpace

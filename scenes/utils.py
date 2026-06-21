@@ -9,6 +9,7 @@ from manimlib.mobject.geometry import Arrow, Line, DashedLine, Dot, Arc
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.mobject.svg.tex_mobject import Tex
 from manimlib import *
+from manimlib.config import manim_config as _manim_config
 import os
 import random
 from PIL import Image
@@ -40,6 +41,22 @@ SHADOW = "#CC8855"    # Muted terracotta - cluster 2, secondary differentiation
 
 # --- Legacy Aliases ---
 ACCENT = CYAN          # Alias for ACCENT (used in scene03)
+
+
+# =============================================================================
+# LAYOUT CONSTANTS - Shared frame-safe layout rules
+# These define the safe region reserved for subtitles so all scenes
+# remain consistent and leave room for future caption insertion.
+# =============================================================================
+
+# Manim default frame: height=8.0, width=~14.22 (16:9 at height 8)
+# Default subtitle reserved area: bottom 1.5 units of the frame
+SUBTITLE_HEIGHT = 1.5     # vertical space reserved for subtitle / narration text
+FRAME_MARGIN   = 0.45     # minimum padding from frame edge for all elements
+
+# Derived safe boundaries (available height between title area and subtitle area)
+# Safe top =  frame_top - FRAME_MARGIN - TITLE_MARGIN  (~3.8)
+# Safe bottom = -frame_top + SUBTITLE_HEIGHT + FRAME_MARGIN  (~-5.2)
 
 
 # =============================================================================
@@ -194,6 +211,69 @@ def fit_to_bounds(mob, max_width=None, max_height=None):
     return mob
 
 
+def center_element_group(group, max_width=None, max_height=None, subtitle_height=SUBTITLE_HEIGHT, margin=FRAME_MARGIN):
+    """Center a group of elements within the safe content area, leaving room for subtitles.
+
+    This is the single canonical layout function for all scenes. Call it after all
+    relative positioning (next_to, move_to, to_edge...) is done.
+
+    Layout pipeline applied in order:
+      1. Scale group down if it exceeds max_width / max_height.
+      2. Center horizontally at x=0.
+      3. Shift group upward until its top edge hits safe_top.
+         safe_top = frame_height/2 - margin - TITLE_MARGIN
+      4. If group bottom extends below safe_bottom, shift it up.
+         safe_bottom = -frame_height/2 + subtitle_height + margin
+
+    Args:
+        group:          Mobject or VGroup to center.
+        max_width:      Hard width cap (default: full frame width minus 2*margin).
+        max_height:     Hard height cap (default: full frame height minus
+                        TITLE_MARGIN + subtitle_height + 2*margin).
+        subtitle_height: Vertical space reserved at bottom for subtitles
+                        (default: SUBTITLE_HEIGHT constant).
+        margin:         Padding from frame edges (default: FRAME_MARGIN constant).
+
+    Returns:
+        The group (for chaining).
+    """
+    frame_h = FRAME_HEIGHT
+    frame_w = FRAME_WIDTH
+
+    TITLE_MARGIN = 0.38  # space reserved for title at top
+
+    # Defaults
+    if max_width is None:
+        max_width = frame_w - 2 * margin
+    if max_height is None:
+        max_height = frame_h - TITLE_MARGIN - subtitle_height - 2 * margin
+
+    safe_top    =  frame_h / 2 - margin - TITLE_MARGIN
+    safe_bottom = -frame_h / 2 + subtitle_height + margin
+
+    # Step 1: scale down if needed
+    excess_w = group.get_width() - max_width
+    excess_h = group.get_height() - max_height
+    if excess_w > 0 or excess_h > 0:
+        scale_w = max_width  / group.get_width()  if group.get_width()  > 0 else 1.0
+        scale_h = max_height / group.get_height() if group.get_height() > 0 else 1.0
+        group.set_width(min(max_width,  group.get_width()  * min(scale_w, scale_h)))
+        group.set_height(min(max_height, group.get_height() * min(scale_w, scale_h)))
+
+    # Step 2: center horizontally
+    group.move_to(ORIGIN)
+
+    # Step 3: clamp to safe top (title area clearance)
+    if group.get_top()[1] > safe_top:
+        group.shift(DOWN * (group.get_top()[1] - safe_top))
+
+    # Step 4: clamp to safe bottom (subtitle area clearance)
+    if group.get_bottom()[1] < safe_bottom:
+        group.shift(UP * (safe_bottom - group.get_bottom()[1]))
+
+    return group
+
+
 def make_scene_title(title, subtitle=None, title_size=42, subtitle_size=22, color=WHITE):
     """Create a compact two-line title block that stays clear of the frame edge."""
     title_mob = latex(rf"\textbf{{{tex_text(title)}}}", size=title_size, color=color)
@@ -204,6 +284,22 @@ def make_scene_title(title, subtitle=None, title_size=42, subtitle_size=22, colo
     subtitle_mob = latex(rf"\text{{{tex_text(subtitle)}}}", size=subtitle_size, color=MUTED)
     group = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.12)
     group.to_edge(UP, buff=0.38)
+    return group
+
+
+def make_centered_title_card(title, subtitle=None, title_size=56, subtitle_size=26):
+    """Full-screen black title card centered on screen (both axes).
+
+    Used as a scene-opening title card: nền đen, title + optional subtitle
+    nằm chính giữa màn hình.
+    """
+    main = latex(rf"\textbf{{{tex_text(title)}}}", size=title_size, color=WHITE)
+    if subtitle is None:
+        group = main
+    else:
+        sub = latex(rf"\text{{{tex_text(subtitle)}}}", size=subtitle_size, color=MUTED)
+        group = VGroup(main, sub).arrange(DOWN, buff=0.18)
+    group.move_to(ORIGIN)
     return group
 
 

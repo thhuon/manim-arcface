@@ -10,8 +10,6 @@ from scenes.utils import *
 # =============================================================================
 
 
-
-
 # =============================================================================
 # BEAT 0: Evolution Timeline (Scene 5 Beat A)
 # =============================================================================
@@ -85,6 +83,11 @@ def beat_0_evolution_timeline(scene):
 # =============================================================================
 class Scene05_Evolution(Scene):
     def construct(self):
+        card = make_centered_title_card("Evolution of Face Recognition")
+        self.play(FadeIn(card), run_time=1.0)
+        self.wait(1.0)
+        self.play(FadeOut(card), run_time=0.5)
+
         beat_0_evolution_timeline(self)
         clear_scene(self, run_time=0.65, wait_time=0.15)
 

@@ -99,6 +99,12 @@ def beat_2_closing(scene):
 # =============================================================================
 class Scene07_Closing(Scene):
     def construct(self):
+        self.camera.background_color = DARK
+        card = make_centered_title_card("Closing")
+        self.play(FadeIn(card), run_time=1.0)
+        self.wait(1.0)
+        self.play(FadeOut(card), run_time=0.5)
+
         beat_1_applications(self)
         self.clear()
         self.wait(1.0)
